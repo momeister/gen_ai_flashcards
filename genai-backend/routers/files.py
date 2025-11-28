@@ -30,14 +30,14 @@ class FileMeta(BaseModel):
 @router.post("/projects/{project_id}/files", response_model=List[dict])
 async def upload_files(project_id: str, files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
     """
-    Dateien zu einem Projekt hochladen und verarbeiten
-    - Speichert die Datei auf dem Dateisystem
-    - Extrahiert Text mit OCR (PDF/Bild)
-    - Speichert Extraktion als JSON und Markdown
+    Upload and process files for a project
+    - Stores the file on the filesystem
+    - Extracts text with OCR (PDF/Image)
+    - Stores extraction as JSON and Markdown
     """
     project = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not project:
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        raise HTTPException(status_code=404, detail="Project not found")
     
     results = []
     for f in files:
@@ -95,10 +95,10 @@ async def upload_files(project_id: str, files: List[UploadFile] = File(...), db:
 
 @router.get("/projects/{project_id}/files", response_model=List[FileMeta])
 def list_files(project_id: str, db: Session = Depends(get_db)):
-    """Alle Dateien eines Projekts auflisten"""
+    """List all files of a project"""
     project = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not project:
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        raise HTTPException(status_code=404, detail="Project not found")
     
     files = db.query(FileORM).filter(FileORM.project_id == project_id).all()
     return [
@@ -113,20 +113,20 @@ def list_files(project_id: str, db: Session = Depends(get_db)):
 
 @router.delete("/projects/{project_id}/files/{file_id}")
 def delete_file(project_id: str, file_id: str, db: Session = Depends(get_db)):
-    """Datei aus einem Projekt löschen"""
+    """Delete a file from a project"""
     file_obj = db.query(FileORM).filter(
         FileORM.id == file_id,
         FileORM.project_id == project_id
     ).first()
     
     if not file_obj:
-        raise HTTPException(status_code=404, detail="Datei nicht gefunden")
+        raise HTTPException(status_code=404, detail="File not found")
     
     try:
         if os.path.exists(file_obj.stored_path):
             os.remove(file_obj.stored_path)
     except Exception as e:
-        print(f"Fehler beim Löschen der Datei vom Dateisystem: {e}")
+        print(f"Error deleting file from filesystem: {e}")
     
     db.delete(file_obj)
     db.commit()
@@ -136,16 +136,16 @@ def delete_file(project_id: str, file_id: str, db: Session = Depends(get_db)):
 @router.get("/files/{file_id}")
 def get_file_raw(file_id: str, db: Session = Depends(get_db)):
     """
-    Rohdatei herunterladen oder inline anzeigen
-    - PDFs werden inline im Browser angezeigt
-    - Content-Disposition: inline verhindert automatischen Download
+    Download raw file or display inline
+    - PDFs are displayed inline in the browser
+    - Content-Disposition: inline prevents automatic download
     """
     file_obj = db.query(FileORM).filter(FileORM.id == file_id).first()
     if not file_obj:
-        raise HTTPException(status_code=404, detail="Datei nicht gefunden")
+        raise HTTPException(status_code=404, detail="File not found")
     
     if not os.path.exists(file_obj.stored_path):
-        raise HTTPException(status_code=404, detail="Dateisystempfad fehlt")
+        raise HTTPException(status_code=404, detail="Filesystem path missing")
     
     # Use inline to prevent download prompt for PDFs/images
     headers = {"Content-Disposition": f'inline; filename="{file_obj.original_filename}"'}
@@ -159,15 +159,15 @@ def get_file_raw(file_id: str, db: Session = Depends(get_db)):
 @router.get("/files/{file_id}/extracted")
 def get_file_extracted(file_id: str, format: str = "json"):
     """
-    Extrahierten Text einer Datei abrufen
-    - format=json: Strukturiertes JSON mit Seiten
-    - format=md: Markdown-Format für LLM-Verarbeitung
+    Retrieve extracted text of a file
+    - format=json: Structured JSON with pages
+    - format=md: Markdown format for LLM processing
     """
     ext = "json" if format == "json" else "md"
     extracted_path = os.path.join(EXTRACTED_DIR, f"{file_id}.{ext}")
     
     if not os.path.exists(extracted_path):
-        raise HTTPException(status_code=404, detail="Extraktionsdatei nicht gefunden")
+        raise HTTPException(status_code=404, detail="Extraction file not found")
     
     with open(extracted_path, "r", encoding="utf-8") as f:
         content = f.read()

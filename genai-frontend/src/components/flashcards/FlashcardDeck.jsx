@@ -13,10 +13,10 @@ export default function FlashcardDeck({ projectId }) {
   const [editing, setEditing] = useState(null);
   const [overview, setOverview] = useState(true);
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('all'); // all | neu | nicht_sicher | kann_ich
+  const [filter, setFilter] = useState('all'); // all | new | unsure | know_it
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
-  const [studyFilter, setStudyFilter] = useState('all'); // all | neu | nicht_sicher | kann_ich | important
+  const [studyFilter, setStudyFilter] = useState('all'); // all | new | unsure | know_it | important
   const [files, setFiles] = useState([]);
   const [viewerFile, setViewerFile] = useState(null);
 
@@ -28,7 +28,7 @@ export default function FlashcardDeck({ projectId }) {
         const mapped = backendCards.map(c => ({ id: c.id, front: c.question, back: c.answer, level: levelFromNumber(c.level), reviewCount: c.review_count || 0, createdAt: Date.now(), lastReviewed: null, important: !!(c.important) }));
         setCards(mapped);
       } catch (e) {
-        console.warn('Karten konnten nicht geladen werden', e);
+        console.warn('Cards could not be loaded', e);
         setCards([]);
       }
       try {
@@ -36,15 +36,15 @@ export default function FlashcardDeck({ projectId }) {
         const mappedFiles = backendFiles.map(f => ({ id: f.id, name: f.original_filename, size: f.size, type: f.mime_type, previewUrl: uploadsAPI.rawFileUrl(f.id) }));
         setFiles(mappedFiles);
       } catch (e) {
-        console.warn('Dateien konnten nicht geladen werden', e);
+        console.warn('Files could not be loaded', e);
         setFiles([]);
       }
     };
     load();
   }, [projectId]);
 
-  const levelMap = { neu: 0, nicht_sicher: 1, kann_ich: 2 };
-  const levelFromNumber = (n) => Object.entries(levelMap).find(([,v])=>v===n)?.[0] || 'neu';
+  const levelMap = { new: 0, unsure: 1, know_it: 2 };
+  const levelFromNumber = (n) => Object.entries(levelMap).find(([,v])=>v===n)?.[0] || 'new';
 
   const openNew = () => { setEditing(null); setEditorOpen(true); };
   const openEdit = (card) => { setEditing(card); setEditorOpen(true); };
@@ -59,20 +59,20 @@ export default function FlashcardDeck({ projectId }) {
       const mapped = backendCards.map(c => ({ id: c.id, front: c.question, back: c.answer, level: levelFromNumber(c.level), reviewCount: c.review_count || 0, createdAt: Date.now(), lastReviewed: null, important: !!(c.important) }));
       setCards(mapped);
     } catch (e) {
-      alert('Speichern fehlgeschlagen: ' + (e.message || 'Unbekannt'));
+      alert('Save failed: ' + (e.message || 'Unknown'));
     }
     setEditorOpen(false);
   };
 
   const deleteCard = async (id) => {
-    if (!confirm('Karte wirklich löschen?')) return;
+    if (!confirm('Delete card permanently?')) return;
     try {
       await flashcardsAPI.delete(projectId, id);
       const backendCards = await flashcardsAPI.getByProject(projectId);
       const mapped = backendCards.map(c => ({ id: c.id, front: c.question, back: c.answer, level: levelFromNumber(c.level), reviewCount: c.review_count || 0, createdAt: Date.now(), lastReviewed: null, important: !!(c.important) }));
       setCards(mapped);
     } catch (e) {
-      alert('Löschen fehlgeschlagen: ' + (e.message || 'Unbekannt'));
+      alert('Delete failed: ' + (e.message || 'Unknown'));
     }
   };
 
@@ -85,12 +85,12 @@ export default function FlashcardDeck({ projectId }) {
       const mapped = backendCards.map(c => ({ id: c.id, front: c.question, back: c.answer, level: levelFromNumber(c.level), reviewCount: c.review_count || 0, createdAt: Date.now(), lastReviewed: null, important: !!(c.important) }));
       setCards(mapped);
     } catch (e) {
-      console.warn('Level Update fehlgeschlagen', e);
+      console.warn('Level update failed', e);
     }
   };
 
   const exportCSV = () => {
-    if (!cards.length) return alert('Keine Karten vorhanden');
+    if (!cards.length) return alert('No cards available');
     const rows = cards.map(c => [c.front.replace(/"/g,'""'), c.back.replace(/"/g,'""'), c.level, c.reviewCount]);
     let csv = '"Front";"Back";"Level";"ReviewCount"\n' + rows.map(r => r.map(f=>`"${f}"`).join(';')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -112,7 +112,7 @@ export default function FlashcardDeck({ projectId }) {
     const loaded = loadTestFlashcards();
     setCards(loaded);
     upsertFlashcards(projectId, () => loaded);
-    alert(`${loaded.length} Testkarten geladen.`);
+    alert(`${loaded.length} test cards loaded.`);
   };
 
   const handleDropFiles = async (e) => {
@@ -124,17 +124,17 @@ export default function FlashcardDeck({ projectId }) {
       const backendFiles = await uploadsAPI.getFiles(projectId);
       const mappedFiles = backendFiles.map(f => ({ id: f.id, name: f.original_filename, size: f.size, type: f.mime_type, previewUrl: uploadsAPI.rawFileUrl(f.id) }));
       setFiles(mappedFiles);
-      alert(`${dropped.length} Datei(en) hochgeladen.`);
+      alert(`${dropped.length} file(s) uploaded.`);
     } catch (e) {
-      alert('Datei-Upload fehlgeschlagen: ' + (e.message || 'Unbekannt'));
+      alert('File upload failed: ' + (e.message || 'Unknown'));
     }
   };
 
   const stats = {
     total: cards.length,
-    neu: cards.filter(c=>c.level==='neu').length,
-    unsicher: cards.filter(c=>c.level==='nicht_sicher').length,
-    kann: cards.filter(c=>c.level==='kann_ich').length,
+    neu: cards.filter(c=>c.level==='new').length,
+    unsicher: cards.filter(c=>c.level==='unsure').length,
+    kann: cards.filter(c=>c.level==='know_it').length,
     important: cards.filter(c=>c.important).length,
   };
 
@@ -169,11 +169,11 @@ export default function FlashcardDeck({ projectId }) {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-2">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text">Lernkarten</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Erstelle, lerne, exportiere – mit animiertem Swipe.</p>
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text">Flashcards</h2>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Create, study, export – with animated swipe.</p>
       </div>
       <div className="flex flex-wrap gap-2 sm:gap-3 justify-center items-center">
-        <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={openNew} className="btn btn-primary">+ Neue Karte</motion.button>
+        <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={openNew} className="btn btn-primary">+ New Card</motion.button>
         
         {/* PROMINENT Learn Button */}
         <motion.button 
@@ -184,7 +184,7 @@ export default function FlashcardDeck({ projectId }) {
           className="relative px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 disabled:from-zinc-300 disabled:to-zinc-400 dark:disabled:from-zinc-700 dark:disabled:to-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-400 text-white text-base sm:text-lg font-bold shadow-2xl transition-all overflow-hidden group"
         >
           <span className="relative z-10 flex items-center gap-2">
-            🎯 Lernen starten
+            🎯 Start Studying
             <span className="text-xs sm:text-sm font-normal opacity-80">({studyCards.length})</span>
           </span>
           <motion.div 
@@ -194,46 +194,46 @@ export default function FlashcardDeck({ projectId }) {
           />
         </motion.button>
         <div className="flex items-center gap-2">
-          <label className="text-xs text-on-muted">Lernmenge</label>
+          <label className="text-xs text-on-muted">Study Set</label>
           <select value={studyFilter} onChange={e=>setStudyFilter(e.target.value)} className="px-2 py-1 rounded bg-card border border-token text-on-surface">
-            <option value="all">Alle</option>
-            <option value="neu">Nur Neu</option>
-            <option value="nicht_sicher">Nur Nicht sicher</option>
-            <option value="kann_ich">Nur Kann ich</option>
-            <option value="important">Nur Wichtig ⭐</option>
+            <option value="all">All</option>
+            <option value="new">Only New</option>
+            <option value="unsure">Only Unsure</option>
+            <option value="know_it">Only Know It</option>
+            <option value="important">Only Important ⭐</option>
           </select>
         </div>
-        <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={exportCSV} className="btn btn-secondary">📤 Export</motion.button>
-        <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={loadTest} className="btn" style={{ background:'hsl(var(--accent-100))', color:'hsl(var(--on-surface))' }}>🧪 Test</motion.button>
+        <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={exportCSV} className="btn btn-secondary">📤 Export CSV</motion.button>
+        <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={loadTest} className="btn" style={{ background:'hsl(var(--accent-100))', color:'hsl(var(--on-surface))' }}>🧪 Load Test</motion.button>
       </div>
 
       {/* Search, Tabs and Page size */}
       <div className="flex flex-wrap gap-3 items-center justify-between bg-surface-variant border border-token rounded-xl p-3">
         <div className="flex items-center gap-2">
-          <input value={query} onChange={e=>{ setQuery(e.target.value); setPage(1); }} placeholder="Suchen…" className="px-3 py-2 rounded-lg bg-card border border-token text-on-surface w-48 sm:w-64 focus:outline-none focus:ring-2" style={{ outlineColor:'hsl(var(--accent))' }} />
+          <input value={query} onChange={e=>{ setQuery(e.target.value); setPage(1); }} placeholder="Search…" className="px-3 py-2 rounded-lg bg-card border border-token text-on-surface w-48 sm:w-64 focus:outline-none focus:ring-2" style={{ outlineColor:'hsl(var(--accent))' }} />
           <div className="hidden sm:flex items-center gap-1">
-            {['all','neu','nicht_sicher','kann_ich'].map(t => (
-              <button key={t} onClick={()=>{ setFilter(t); setPage(1); }} className={`chip ${filter===t?'bg-[hsl(var(--accent-50))]':''}`}>{t==='all'?'Alle':t.replace('_',' ')}</button>
+            {['all','new','unsure','know_it'].map(t => (
+              <button key={t} onClick={()=>{ setFilter(t); setPage(1); }} className={`chip ${filter===t?'bg-[hsl(var(--accent-50))]':''}`}>{t==='all'?'All':t.replace('_',' ')}</button>
             ))}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs text-on-muted">Pro Seite</label>
+          <label className="text-xs text-on-muted">Per Page</label>
           <select value={pageSize} onChange={e=>{ setPageSize(parseInt(e.target.value)); setPage(1); }} className="px-2 py-1 rounded bg-card border border-token text-on-surface">
             {[8,16,32].map(n=> <option key={n} value={n}>{n}</option>)}
           </select>
         </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center text-xs">
-        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Gesamt<br /><span className="text-cyan-500 dark:text-cyan-400 font-semibold text-2xl">{stats.total}</span></motion.div>
-        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Neu<br /><span className="text-cyan-500 dark:text-cyan-400 font-semibold text-2xl">{stats.neu}</span></motion.div>
-        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Nicht sicher<br /><span className="text-yellow-500 dark:text-yellow-400 font-semibold text-2xl">{stats.unsicher}</span></motion.div>
-        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Kann ich<br /><span className="text-green-500 dark:text-green-400 font-semibold text-2xl">{stats.kann}</span></motion.div>
-        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Wichtig<br /><span className="text-yellow-500 dark:text-yellow-300 font-semibold text-2xl">{stats.important}</span></motion.div>
+        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Total<br /><span className="text-cyan-500 dark:text-cyan-400 font-semibold text-2xl">{stats.total}</span></motion.div>
+        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">New<br /><span className="text-cyan-500 dark:text-cyan-400 font-semibold text-2xl">{stats.neu}</span></motion.div>
+        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Unsure<br /><span className="text-yellow-500 dark:text-yellow-400 font-semibold text-2xl">{stats.unsicher}</span></motion.div>
+        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Know It<br /><span className="text-green-500 dark:text-green-400 font-semibold text-2xl">{stats.kann}</span></motion.div>
+        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Important<br /><span className="text-yellow-500 dark:text-yellow-300 font-semibold text-2xl">{stats.important}</span></motion.div>
       </div>
       {/* Overview list – Polaroid cards */}
       {overview && filtered.length === 0 ? (
-        <div className="p-10 text-center border border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-400 dark:text-zinc-500">Noch keine Karten. Erstelle eine oder lade Testdaten.</div>
+        <div className="p-10 text-center border border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-400 dark:text-zinc-500">No cards yet. Create one or load test data.</div>
       ) : overview ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <AnimatePresence>
@@ -256,8 +256,8 @@ export default function FlashcardDeck({ projectId }) {
                         <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${card.level==='neu'?'border-cyan-500/40 text-cyan-500 bg-cyan-500/10':card.level==='nicht_sicher'?'border-yellow-500/40 text-yellow-500 bg-yellow-500/10':'border-green-500/40 text-green-500 bg-green-500/10'}`}>{card.level}</span>
                         <span className="text-xs text-zinc-400 dark:text-zinc-500">↻ {card.reviewCount}</span>
                       </div>
-                      <p className="text-sm text-on-surface whitespace-pre-wrap"><strong>Frage:</strong> {card.front}</p>
-                      <p className="text-sm text-on-muted whitespace-pre-wrap mt-2"><strong>Antwort:</strong> {card.back}</p>
+                      <p className="text-sm text-on-surface whitespace-pre-wrap"><strong>Question:</strong> {card.front}</p>
+                      <p className="text-sm text-on-muted whitespace-pre-wrap mt-2"><strong>Answer:</strong> {card.back}</p>
                     </div>
                     <div className="flex flex-col gap-2">
                       <motion.button whileHover={{scale:1.1, rotate:0}} whileTap={{scale:0.9}} onClick={async ()=>{
@@ -270,14 +270,14 @@ export default function FlashcardDeck({ projectId }) {
                           const mapped = backendCards.map(c => ({ id: c.id, front: c.question, back: c.answer, level: levelFromNumber(c.level), reviewCount: c.review_count || 0, createdAt: Date.now(), lastReviewed: null, important: !!(c.important) }));
                           setCards(mapped);
                         } catch (e) {
-                          console.error('[ERROR] Important toggle fehlgeschlagen', e);
-                          alert('Fehler beim Speichern: ' + (e.message || 'Unbekannt'));
+                          console.error('[ERROR] Important toggle failed', e);
+                          alert('Error saving: ' + (e.message || 'Unknown'));
                         }
-                      }} className={`p-2 rounded-lg transition-colors ${card.important?'bg-yellow-500 text-white hover:bg-yellow-600':'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600'}`} title="Wichtig">
+                      }} className={`p-2 rounded-lg transition-colors ${card.important?'bg-yellow-500 text-white hover:bg-yellow-600':'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600'}`} title="Important">
                         ⭐
                       </motion.button>
-                      <motion.button whileHover={{scale:1.1, rotate:5}} whileTap={{scale:0.9}} onClick={()=>openEdit(card)} className="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-700 hover:bg-cyan-100 dark:hover:bg-cyan-900 text-cyan-600 dark:text-cyan-300 transition-colors" title="Bearbeiten">✏️</motion.button>
-                      <motion.button whileHover={{scale:1.1, rotate:-5}} whileTap={{scale:0.9}} onClick={()=>deleteCard(card.id)} className="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-700 hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-300 transition-colors" title="Löschen">🗑️</motion.button>
+                      <motion.button whileHover={{scale:1.1, rotate:5}} whileTap={{scale:0.9}} onClick={()=>openEdit(card)} className="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-700 hover:bg-cyan-100 dark:hover:bg-cyan-900 text-cyan-600 dark:text-cyan-300 transition-colors" title="Edit">✏️</motion.button>
+                      <motion.button whileHover={{scale:1.1, rotate:-5}} whileTap={{scale:0.9}} onClick={()=>deleteCard(card.id)} className="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-700 hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-300 transition-colors" title="Delete">🗑️</motion.button>
                     </div>
                   </div>
                 </motion.div>
@@ -291,7 +291,7 @@ export default function FlashcardDeck({ projectId }) {
       {overview && filtered.length > 0 && (
         <div className="flex items-center justify-center gap-3">
           <button className="btn" onClick={()=> setPage(p=>Math.max(1, p-1))} disabled={clampedPage===1} style={{ background:'hsl(var(--surface-variant))' }}>←</button>
-          <span className="text-on-muted text-sm">Seite {clampedPage} / {totalPages}</span>
+          <span className="text-on-muted text-sm">Page {clampedPage} / {totalPages}</span>
           <button className="btn" onClick={()=> setPage(p=>Math.min(totalPages, p+1))} disabled={clampedPage===totalPages} style={{ background:'hsl(var(--surface-variant))' }}>→</button>
         </div>
       )}
@@ -316,14 +316,14 @@ export default function FlashcardDeck({ projectId }) {
         whileHover={{scale:1.02, borderColor:'hsl(var(--accent))'}}
         className="mt-8 p-8 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 text-center text-sm text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/30 transition-all"
       >
-        📎 Dateien hier ablegen um sie diesem Projekt hinzuzufügen (Backend)
+        📎 Drop files here to add them to this project (backend)
       </motion.div>
 
       {/* Files list */}
       <div className="mt-6">
-        <h3 className="text-sm font-semibold mb-2" style={{ color:'hsl(var(--accent))' }}>Dateien</h3>
+        <h3 className="text-sm font-semibold mb-2" style={{ color:'hsl(var(--accent))' }}>Files</h3>
         {files.length === 0 ? (
-          <div className="text-on-muted text-sm">Noch keine Dateien hinzugefügt.</div>
+          <div className="text-on-muted text-sm">No files added yet.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {files.map(f => (
@@ -340,7 +340,7 @@ export default function FlashcardDeck({ projectId }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="btn" style={{ background:'hsl(var(--surface-variant))' }} onClick={()=>setViewerFile(f)}>Ansehen</button>
+                  <button className="btn" style={{ background:'hsl(var(--surface-variant))' }} onClick={()=>setViewerFile(f)}>View</button>
                 </div>
               </div>
             ))}

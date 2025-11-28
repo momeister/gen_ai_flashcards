@@ -26,7 +26,7 @@ class ProjectUpdate(ProjectBase):
 
 @router.get("", response_model=List[Project])
 def get_projects(db: Session = Depends(get_db)):
-    """Alle Projekte abrufen"""
+    """Retrieve all projects"""
     items = db.query(ProjectORM).all()
     result = []
     for p in items:
@@ -37,7 +37,7 @@ def get_projects(db: Session = Depends(get_db)):
 
 @router.post("", response_model=Project)
 def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
-    """Neues Projekt erstellen"""
+    """Create new project"""
     obj = ProjectORM(title=project.title, description=project.description)
     db.add(obj)
     db.commit()
@@ -47,20 +47,20 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
 
 @router.get("/{project_id}", response_model=Project)
 def get_project(project_id: str, db: Session = Depends(get_db)):
-    """Einzelnes Projekt abrufen"""
+    """Retrieve single project"""
     obj = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not obj:
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        raise HTTPException(status_code=404, detail="Project not found")
     card_count = db.query(FlashcardORM).filter(FlashcardORM.project_id == obj.id).count()
     return Project(id=obj.id, title=obj.title, description=obj.description, cardCount=card_count)
 
 
 @router.patch("/{project_id}", response_model=Project)
 def update_project(project_id: str, updates: ProjectUpdate, db: Session = Depends(get_db)):
-    """Projekt aktualisieren (z.B. Umbenennen)"""
+    """Update project (e.g. rename)"""
     obj = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not obj:
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        raise HTTPException(status_code=404, detail="Project not found")
     for k, v in updates.dict(exclude_unset=True).items():
         setattr(obj, k, v)
     db.commit()
@@ -71,10 +71,10 @@ def update_project(project_id: str, updates: ProjectUpdate, db: Session = Depend
 
 @router.delete("/{project_id}")
 def delete_project(project_id: str, db: Session = Depends(get_db)):
-    """Projekt löschen"""
+    """Delete project"""
     obj = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not obj:
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        raise HTTPException(status_code=404, detail="Project not found")
     db.delete(obj)
     db.commit()
     return {"status": "success"}

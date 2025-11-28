@@ -8,7 +8,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="GenAI Backend API",
-    description="Backend für Flashcard Management mit PDF/Bild-Extraktion",
+    description="Backend for flashcard management with PDF/Image extraction",
     version="1.0.0"
 )
 

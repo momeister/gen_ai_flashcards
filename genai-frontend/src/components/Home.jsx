@@ -22,7 +22,7 @@ export default function Home({ onOpenProject, accentHue, onAccentHueChange }) {
       list.sort((a,b)=> a.title.localeCompare(b.title));
       setProjects(list);
     } catch (e) {
-      console.warn('Konnte Projekte nicht laden:', e);
+      console.warn('Could not load projects:', e);
       setProjects([]);
     }
   };
@@ -30,7 +30,7 @@ export default function Home({ onOpenProject, accentHue, onAccentHueChange }) {
   useEffect(() => { reload(); }, []);
 
   const createNewProject = async () => {
-    const name = prompt('Projektname eingeben:');
+    const name = prompt('Enter project name:');
     if (!name) return;
     const p = await projectsAPI.create({ title: name, description: '' });
     await reload();
@@ -38,11 +38,11 @@ export default function Home({ onOpenProject, accentHue, onAccentHueChange }) {
   };
 
   const handleDropNew = async (files) => {
-    const name = prompt('Projektname für Upload:');
+    const name = prompt('Project name for upload:');
     if (!name) return;
     const p = await projectsAPI.create({ title: name, description: '' });
     await reload();
-    alert(`${files.length} Datei(en) bereit – bitte in der Upload-Kachel hochladen.`);
+    alert(`${files.length} file(s) ready – please upload in the upload tile.`);
   };
 
   const PRESETS = [
@@ -84,11 +84,11 @@ export default function Home({ onOpenProject, accentHue, onAccentHueChange }) {
       {/* Top: Title + Accent Hue Slider with Parallax */}
       <motion.div style={{ y, opacity }} className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold">Deine Projekte</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Wähle ein Projekt zum Weiterlernen – oder erstelle ein neues.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold">Your Projects</h2>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Select a project to continue learning – or create a new one.</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-surface-variant border border-token transition-colors">
-          <label className="text-xs text-zinc-500 dark:text-zinc-400">Farbakzent</label>
+          <label className="text-xs text-zinc-500 dark:text-zinc-400">Accent Color</label>
           <input type="range" min="0" max="360" value={accentHue} onChange={(e)=>onAccentHueChange(parseInt(e.target.value))}
             className="w-28 sm:w-48 accent-[hsl(var(--accent))] hover:cursor-grab active:cursor-grabbing" />
           <motion.div 
@@ -99,10 +99,10 @@ export default function Home({ onOpenProject, accentHue, onAccentHueChange }) {
           />
           <div className="hidden md:flex items-center gap-1 pl-2">
             <select value={presetCategory} onChange={e=>setPresetCategory(e.target.value)} className="px-2 py-1 rounded-lg bg-card border border-token text-on-surface text-xs">
-              <option value="all">Alle</option>
-              <option value="cool">Kühl</option>
+              <option value="all">All</option>
+              <option value="cool">Cool</option>
               <option value="warm">Warm</option>
-              <option value="vivid">Leuchtend</option>
+              <option value="vivid">Vivid</option>
             </select>
             {visiblePresets.map(p => (
               <button key={p.name} onClick={()=>onAccentHueChange(p.hue)} className="px-2 py-1 rounded-lg text-xs border border-token hover:bg-surface" style={{ color:`hsl(${p.hue} 90% 40%)` }}>{p.name}</button>
@@ -118,20 +118,20 @@ export default function Home({ onOpenProject, accentHue, onAccentHueChange }) {
           {/* Toolbar */}
           <div className="flex flex-wrap items-center gap-3 justify-between bg-surface-variant border border-token rounded-xl p-3">
             <div className="flex items-center gap-2">
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Projekte suchen…" className="px-3 py-2 rounded-lg bg-card border border-token text-on-surface w-48 sm:w-64" />
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search projects…" className="px-3 py-2 rounded-lg bg-card border border-token text-on-surface w-48 sm:w-64" />
               <div className="hidden sm:flex items-center gap-1">
                 {['all','pinned','recent'].map(t => (
-                  <button key={t} onClick={()=>setTab(t)} className={`chip ${tab===t?'bg-[hsl(var(--accent-50))]':''}`}>{t==='all'?'Alle':t==='pinned'?'Gepinnt':'Zuletzt'}</button>
+                  <button key={t} onClick={()=>setTab(t)} className={`chip ${tab===t?'bg-[hsl(var(--accent-50))]':''}`}>{t==='all'?'All':t==='pinned'?'Pinned':'Recent'}</button>
                 ))}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={reload} className="px-3 py-2 rounded bg-surface-variant border border-token text-xs">↻ Aktualisieren</button>
+              <button onClick={reload} className="px-3 py-2 rounded bg-surface-variant border border-token text-xs">↻ Refresh</button>
             </div>
           </div>
           {filteredProjects.length === 0 ? (
             <div className="p-8 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500 text-center">
-              Noch keine Projekte. Erstelle rechts ein neues Projekt.
+              No projects yet. Create a new project on the right.
             </div>
           ) : (
             filteredProjects.map((p, idx) => {
@@ -149,12 +149,12 @@ export default function Home({ onOpenProject, accentHue, onAccentHueChange }) {
                   <div className="flex items-center justify-between mb-3">
                     <div className="text-xl font-bold tracking-tight" style={{ color:'hsl(var(--accent))' }}>{p.title}</div>
                     <div className="flex items-center gap-2">
-                      <button onClick={async (e)=>{e.stopPropagation(); const n = prompt('Neuer Name:', p.title); if(!n) return; await projectsAPI.update(p.id, { title: n }); await reload();}} className="px-2 py-1 rounded-md text-xs bg-surface-variant">✏️ Umbenennen</button>
-                      <button onClick={async (e)=>{e.stopPropagation(); if(confirm('Projekt wirklich löschen?')) { await projectsAPI.delete(p.id); await reload(); }}} className="px-2 py-1 rounded-md text-xs" style={{ background:'hsl(var(--danger))', color:'#fff' }}>🗑️ Löschen</button>
+                      <button onClick={async (e)=>{e.stopPropagation(); const n = prompt('New name:', p.title); if(!n) return; await projectsAPI.update(p.id, { title: n }); await reload();}} className="px-2 py-1 rounded-md text-xs bg-surface-variant">✏️ Rename</button>
+                      <button onClick={async (e)=>{e.stopPropagation(); if(confirm('Delete project permanently?')) { await projectsAPI.delete(p.id); await reload(); }}} className="px-2 py-1 rounded-md text-xs" style={{ background:'hsl(var(--danger))', color:'#fff' }}>🗑️ Delete</button>
                     </div>
                   </div>
                   <div className="text-sm text-on-muted">
-                    📚 {p.cardCount || 0} Karten
+                    📚 {p.cardCount || 0} Cards
                   </div>
                 </motion.button>
               );
@@ -169,8 +169,8 @@ export default function Home({ onOpenProject, accentHue, onAccentHueChange }) {
             initial={{ rotate:1 }}
             className="p-6 pb-10 rounded-lg bg-card border-8 border-token shadow-xl transition-all"
           >
-            <h3 className="text-xl font-semibold mb-2">Projekt & Dateien</h3>
-            <p className="text-sm text-on-muted mb-4">Vergib einen Namen und lade beliebig viele Dateien hoch.</p>
+            <h3 className="text-xl font-semibold mb-2">Project & Files</h3>
+            <p className="text-sm text-on-muted mb-4">Choose a name and upload any number of files.</p>
             <UploadZone onCreated={async (pid)=>{ await reload(); onOpenProject(pid); }} />
           </motion.div>
         </div>

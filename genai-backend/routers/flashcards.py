@@ -36,10 +36,10 @@ class FlashcardLevelUpdate(BaseModel):
 
 @router.get("/projects/{project_id}/flashcards", response_model=List[Flashcard])
 def get_flashcards(project_id: str, db: Session = Depends(get_db)):
-    """Alle Flashcards eines Projekts abrufen"""
+    """Retrieve all flashcards for a project"""
     project = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not project:
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        raise HTTPException(status_code=404, detail="Project not found")
     items = db.query(FlashcardORM).filter(FlashcardORM.project_id == project_id).all()
     return [
         Flashcard(
@@ -55,10 +55,10 @@ def get_flashcards(project_id: str, db: Session = Depends(get_db)):
 
 @router.post("/projects/{project_id}/flashcards", response_model=Flashcard)
 def create_flashcard(project_id: str, card: FlashcardCreate, db: Session = Depends(get_db)):
-    """Neue Flashcard erstellen"""
+    """Create new flashcard"""
     project = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not project:
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        raise HTTPException(status_code=404, detail="Project not found")
     
     obj = FlashcardORM(
         question=card.question,
@@ -83,14 +83,14 @@ def create_flashcard(project_id: str, card: FlashcardCreate, db: Session = Depen
 
 @router.patch("/projects/{project_id}/flashcards/{card_id}", response_model=Flashcard)
 def update_flashcard(project_id: str, card_id: str, updates: FlashcardUpdate, db: Session = Depends(get_db)):
-    """Flashcard aktualisieren (Frage, Antwort, Level, Important, Review Count)"""
+    """Update flashcard (question, answer, level, important, review count)"""
     obj = db.query(FlashcardORM).filter(
         FlashcardORM.id == card_id,
         FlashcardORM.project_id == project_id
     ).first()
     
     if not obj:
-        raise HTTPException(status_code=404, detail="Karte nicht gefunden")
+        raise HTTPException(status_code=404, detail="Card not found")
     
     update_dict = updates.dict(exclude_unset=True)
     print(f"[DEBUG] PATCH /flashcards/{card_id} received payload: {update_dict}")
@@ -115,14 +115,14 @@ def update_flashcard(project_id: str, card_id: str, updates: FlashcardUpdate, db
 
 @router.delete("/projects/{project_id}/flashcards/{card_id}")
 def delete_flashcard(project_id: str, card_id: str, db: Session = Depends(get_db)):
-    """Flashcard löschen"""
+    """Delete flashcard"""
     obj = db.query(FlashcardORM).filter(
         FlashcardORM.id == card_id,
         FlashcardORM.project_id == project_id
     ).first()
     
     if not obj:
-        raise HTTPException(status_code=404, detail="Karte nicht gefunden")
+        raise HTTPException(status_code=404, detail="Card not found")
     
     db.delete(obj)
     db.commit()
@@ -131,14 +131,14 @@ def delete_flashcard(project_id: str, card_id: str, db: Session = Depends(get_db
 
 @router.post("/projects/{project_id}/flashcards/{card_id}/level", response_model=Flashcard)
 def update_flashcard_level(project_id: str, card_id: str, level_data: FlashcardLevelUpdate, db: Session = Depends(get_db)):
-    """Flashcard Level aktualisieren und Review Count erhöhen"""
+    """Update flashcard level and increment review count"""
     obj = db.query(FlashcardORM).filter(
         FlashcardORM.id == card_id,
         FlashcardORM.project_id == project_id
     ).first()
     
     if not obj:
-        raise HTTPException(status_code=404, detail="Karte nicht gefunden")
+        raise HTTPException(status_code=404, detail="Card not found")
     
     if level_data.level is not None:
         obj.level = level_data.level

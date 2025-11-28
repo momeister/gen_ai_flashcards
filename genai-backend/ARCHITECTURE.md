@@ -1,42 +1,42 @@
 # GenAI Backend
 
-FastAPI backend für PDF/Bild-Verarbeitung und Flashcard-Management mit modularer Router-Architektur.
+FastAPI backend for PDF/Image processing and flashcard management with a modular router architecture.
 
-## 🏗️ Architektur
+## 🏗️ Architecture
 
-### Modulare Struktur
+### Modular Structure
 ```
 genau-backend/
-├── main.py                 # App-Konfiguration, Router-Registrierung
+├── main.py                 # App configuration, router registration
 ├── routers/
-│   ├── projects.py        # Projekt-CRUD (GET, POST, PATCH, DELETE)
-│   ├── flashcards.py      # Flashcard-CRUD + Level-Updates
-│   └── files.py           # Datei-Upload, Extraktion, Download
+│   ├── projects.py        # Project CRUD (GET, POST, PATCH, DELETE)
+│   ├── flashcards.py      # Flashcard CRUD + level updates
+│   └── files.py           # File upload, extraction, download
 ├── models/
-│   ├── db.py              # SQLAlchemy Engine & Session
-│   └── tables.py          # ORM Models (Project, File, Flashcard)
+│   ├── db.py              # SQLAlchemy engine & session
+│   └── tables.py          # ORM models (Project, File, Flashcard)
 ├── services/
-│   └── extractor.py       # PDF/Bild OCR-Extraktion
+│   └── extractor.py       # PDF/Image OCR extraction
 └── uploads/
-    └── extracted/         # JSON + Markdown Outputs
+    └── extracted/         # JSON + Markdown outputs
 ```
 
 ## ✨ Features
-- **PDF & Bild-Extraktion**: PyMuPDF + Tesseract OCR
-- **SQLite Datenbank**: Projects, Files, Flashcards mit Relationships
-- **REST API**: Vollständiges CRUD für alle Ressourcen
-- **Markdown-Export**: LLM-optimierte Textformate
-- **Inline PDF-Anzeige**: Content-Disposition Header für Browser-Viewing
-- **Auto-Dokumentation**: Swagger UI unter `/docs`
+- **PDF & image extraction**: PyMuPDF + Tesseract OCR
+- **SQLite database**: Projects, Files, Flashcards with relationships
+- **REST API**: Full CRUD across resources
+- **Markdown export**: LLM‑friendly text formats
+- **Inline PDF viewing**: `Content-Disposition: inline` for browser rendering
+- **Automatic documentation**: Swagger UI at `/docs`
 
 ## 🚀 Installation
 
-### 1. Abhängigkeiten installieren
+### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Tesseract OCR (für Bild-Extraktion)
+### 2. Tesseract OCR (for image extraction)
 ```bash
 # Ubuntu/Debian
 sudo apt-get install tesseract-ocr
@@ -48,56 +48,56 @@ brew install tesseract
 sudo pacman -S tesseract
 ```
 
-## 🎯 Server starten
+## 🎯 Start Server
 
-### Mit Python Virtual Environment
+### Using Python virtual environment
 ```bash
 cd genau-backend
 python -m uvicorn main:app --reload --port 8000
 ```
 
-### Oder mit absolutem Pfad (VS Code Workspace)
+### Or with absolute path (VS Code workspace)
 ```bash
 cd "/home/moritz/Dokumente/TU Wien/GenAI/genau-backend"
 "/home/moritz/Dokumente/TU Wien/GenAI/.venv/bin/python" -m uvicorn main:app --reload --port 8000
 ```
 
-Server läuft auf: **http://localhost:8000**
+Server runs at: **http://localhost:8000**
 
-## 📚 API-Endpunkte
+## 📚 API Endpoints
 
 ### Projects (`/projects`)
-| Methode | Endpoint | Beschreibung |
-|---------|----------|--------------|
-| GET | `/projects` | Alle Projekte abrufen |
-| POST | `/projects` | Neues Projekt erstellen |
-| GET | `/projects/{id}` | Einzelnes Projekt |
-| PATCH | `/projects/{id}` | Projekt aktualisieren |
-| DELETE | `/projects/{id}` | Projekt löschen (CASCADE) |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/projects` | List all projects |
+| POST | `/projects` | Create new project |
+| GET | `/projects/{id}` | Retrieve single project |
+| PATCH | `/projects/{id}` | Update project |
+| DELETE | `/projects/{id}` | Delete project (CASCADE) |
 
 ### Flashcards (`/projects/{id}/flashcards`)
-| Methode | Endpoint | Beschreibung |
-|---------|----------|--------------|
-| GET | `/projects/{id}/flashcards` | Alle Karten eines Projekts |
-| POST | `/projects/{id}/flashcards` | Neue Karte erstellen |
-| PATCH | `/projects/{id}/flashcards/{card_id}` | Karte bearbeiten (Frage, Antwort, Level, Important) |
-| DELETE | `/projects/{id}/flashcards/{card_id}` | Karte löschen |
-| POST | `/projects/{id}/flashcards/{card_id}/level` | Level-Update mit Review-Count-Increment |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/projects/{id}/flashcards` | All cards for a project |
+| POST | `/projects/{id}/flashcards` | Create card |
+| PATCH | `/projects/{id}/flashcards/{card_id}` | Edit card (question, answer, level, important) |
+| DELETE | `/projects/{id}/flashcards/{card_id}` | Delete card |
+| POST | `/projects/{id}/flashcards/{card_id}/level` | Update level & increment review_count |
 
 ### Files (`/projects/{id}/files`, `/files/{id}`)
-| Methode | Endpoint | Beschreibung |
-|---------|----------|--------------|
-| POST | `/projects/{id}/files` | Dateien hochladen (Multi-Upload) |
-| GET | `/projects/{id}/files` | Alle Dateien eines Projekts |
-| DELETE | `/projects/{id}/files/{file_id}` | Datei löschen |
-| GET | `/files/{id}` | Datei herunterladen/inline anzeigen |
-| GET | `/files/{id}/extracted?format=json\|md` | Extrahierten Text abrufen |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/projects/{id}/files` | Upload files (multi-upload) |
+| GET | `/projects/{id}/files` | List all project files |
+| DELETE | `/projects/{id}/files/{file_id}` | Delete file |
+| GET | `/files/{id}` | Download / inline render file |
+| GET | `/files/{id}/extracted?format=json\|md` | Get extracted content |
 
-## 🔍 API-Dokumentation
+## 🔍 API Documentation
 
-Interaktive Swagger UI: **http://localhost:8000/docs**
+Interactive Swagger UI: **http://localhost:8000/docs**
 
-## 🗄️ Datenbank-Schema
+## 🗄️ Database Schema
 
 ### Project
 - `id` (UUID)
@@ -119,17 +119,17 @@ Interaktive Swagger UI: **http://localhost:8000/docs**
 - `id` (UUID)
 - `question` (String)
 - `answer` (String)
-- `level` (Integer): 0=neu, 1=nicht_sicher, 2=kann_ich
-- `important` (Integer): 0=normal, 1=wichtig
-- `review_count` (Integer): Anzahl der Wiederholungen
+- `level` (Integer): 0=new, 1=uncertain, 2=known
+- `important` (Integer): 0=normal, 1=important
+- `review_count` (Integer): repetition count
 - `project_id` (FK → Project)
 - `created_at` (DateTime)
 
 ## 🐛 Debugging
 
-Debug-Logs anzeigen:
+Show debug logs:
 ```bash
-# Terminal-Output beobachten
+# Follow terminal output
 tail -f <terminal_output>
 
 # Oder direkt beim Start
@@ -138,20 +138,20 @@ python -m uvicorn main:app --reload --port 8000 --log-level debug
 
 ## 🛠️ Development
 
-### Neue Route hinzufügen
-1. Datei in `routers/` erstellen (z.B. `stats.py`)
-2. APIRouter mit Tag definieren
-3. Routes implementieren
-4. In `main.py` registrieren: `app.include_router(stats.router)`
+### Add a new route
+1. Create file in `routers/` (e.g. `stats.py`)
+2. Define `APIRouter` with tag
+3. Implement routes
+4. Register in `main.py`: `app.include_router(stats.router)`
 
-### Datenbank-Schema ändern
-1. Model in `models/tables.py` anpassen
-2. Alte `app.db` löschen (Development)
-3. Server neu starten → Auto-Migration
+### Change database schema
+1. Adjust model in `models/tables.py`
+2. Remove old `app.db` (development only)
+3. Restart server → auto-create tables
 
 ## 📝 Notes
 
-- **CORS**: Aktiviert für `localhost:5173` (Vite) und `localhost:3000`
-- **Upload-Limit**: Kein explizites Limit gesetzt (FastAPI Standard: ~10MB)
-- **Extraktion**: JSON für strukturierte Daten, Markdown für LLM-Verarbeitung
-- **PDF-Viewing**: `Content-Disposition: inline` verhindert Auto-Download
+- **CORS**: Enabled for `localhost:5173` (Vite) and `localhost:3000`
+- **Upload limit**: No explicit custom limit (FastAPI default)
+- **Extraction**: JSON for structured data, Markdown for LLM processing
+- **PDF viewing**: `Content-Disposition: inline` prevents forced download

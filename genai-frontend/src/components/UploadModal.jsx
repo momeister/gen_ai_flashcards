@@ -4,7 +4,7 @@ const UploadModal = ({ isOpen, onClose }) => {
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState([]);
 
-  // Erlaubte Dateitypen (statische Formate, keine Videos)
+  // Allowed file types (static formats, no videos)
   const allowedTypes = [
     'application/pdf',
     'image/jpeg',
@@ -33,12 +33,12 @@ const UploadModal = ({ isOpen, onClose }) => {
   };
 
   const validateFile = (file) => {
-    // Prüfe, ob es kein Video ist
+    // Check if it's not a video
     if (file.type.startsWith('video/')) {
       return { valid: false, error: 'Videos sind nicht erlaubt' };
     }
     
-    // Prüfe, ob der Dateityp erlaubt ist
+    // Check if the file type is allowed
     if (!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) {
       // Erlaube alle Bilder und spezifische andere Typen
       if (!allowedTypes.includes(file.type)) {
@@ -68,7 +68,7 @@ const UploadModal = ({ isOpen, onClose }) => {
     });
 
     if (errors.length > 0) {
-      alert('Einige Dateien wurden nicht hinzugefügt:\n' + errors.join('\n'));
+      alert('Some files were not added:\n' + errors.join('\n'));
     }
 
     if (validFiles.length > 0) {
@@ -91,7 +91,7 @@ const UploadModal = ({ isOpen, onClose }) => {
     });
 
     if (errors.length > 0) {
-      alert('Einige Dateien wurden nicht hinzugefügt:\n' + errors.join('\n'));
+      alert('Some files were not added:\n' + errors.join('\n'));
     }
 
     if (validFiles.length > 0) {
@@ -105,13 +105,13 @@ const UploadModal = ({ isOpen, onClose }) => {
 
   const handleUpload = () => {
     if (files.length === 0) {
-      alert('Bitte fügen Sie mindestens eine Datei hinzu');
+      alert('Please add at least one file');
       return;
     }
 
     // Hier würde die tatsächliche Upload-Logik implementiert werden
     console.log('Uploading files:', files);
-    alert(`${files.length} Datei(en) erfolgreich hochgeladen!`);
+    alert(`${files.length} file(s) uploaded successfully!`);
     
     // Reset und schließen
     setFiles([]);
@@ -148,7 +148,7 @@ const UploadModal = ({ isOpen, onClose }) => {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-zinc-800">
-          <h2 className="text-2xl font-bold text-cyan-400">Lectures hinzufügen</h2>
+          <h2 className="text-2xl font-bold text-cyan-400">Add Lectures</h2>
           <button
             onClick={onClose}
             className="text-zinc-400 hover:text-zinc-200 transition-colors"
@@ -199,16 +199,16 @@ const UploadModal = ({ isOpen, onClose }) => {
               
               <div>
                 <p className="text-lg text-zinc-300">
-                  Dateien hierher ziehen oder{' '}
+                  Drag files here or{' '}
                   <label
                     htmlFor="file-input"
                     className="text-cyan-400 hover:text-cyan-300 cursor-pointer underline"
                   >
-                    durchsuchen
+                    browse
                   </label>
                 </p>
                 <p className="text-sm text-zinc-500 mt-2">
-                  PDF, Bilder, Dokumente (Videos nicht erlaubt)
+                  PDF, images, documents (videos not allowed)
                 </p>
               </div>
             </div>
@@ -218,7 +218,7 @@ const UploadModal = ({ isOpen, onClose }) => {
           {files.length > 0 && (
             <div className="mt-6 space-y-2 max-h-64 overflow-y-auto">
               <h3 className="text-sm font-semibold text-zinc-400 mb-3">
-                {files.length} Datei(en) ausgewählt:
+                {files.length} file(s) selected:
               </h3>
               {files.map((file, index) => (
                 <div
@@ -269,14 +269,14 @@ const UploadModal = ({ isOpen, onClose }) => {
             onClick={onClose}
             className="px-6 py-2 text-zinc-400 hover:text-zinc-200 transition-colors"
           >
-            Abbrechen
+            Cancel
           </button>
           <button
             onClick={handleUpload}
             disabled={files.length === 0}
             className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors disabled:bg-zinc-700 disabled:text-zinc-500 disabled:cursor-not-allowed"
           >
-            Hochladen ({files.length})
+            Upload ({files.length})
           </button>
         </div>
       </div>

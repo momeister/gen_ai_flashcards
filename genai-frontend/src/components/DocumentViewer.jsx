@@ -65,12 +65,12 @@ export default function DocumentViewer({ projectId, file, onClose }) {
         <div className="flex items-center justify-between px-4 py-3 border-b border-token">
           <div className="flex items-center gap-3">
             <span className="text-sm text-on-muted">{file?.name}</span>
-            {isImage && <span className="chip">Bild • Highlights aktiv</span>}
-            {isPDF && <span className="chip">PDF • Vorschau</span>}
+            {isImage && <span className="chip">Image • Highlights enabled</span>}
+            {isPDF && <span className="chip">PDF • Preview</span>}
           </div>
           <div className="flex items-center gap-2">
-            <a href={file?.previewUrl} download={file?.name} className="btn" style={{ background:'hsl(var(--accent))', color:'white' }} title="Herunterladen">📥 Download</a>
-            <button onClick={onClose} className="btn" style={{ background:'hsl(var(--surface-variant))' }}>Schließen</button>
+            <a href={file?.previewUrl} download={file?.name} className="btn" style={{ background:'hsl(var(--accent))', color:'white' }} title="Download">📥 Download</a>
+            <button onClick={onClose} className="btn" style={{ background:'hsl(var(--surface-variant))' }}>Close</button>
           </div>
         </div>
 
@@ -97,7 +97,7 @@ export default function DocumentViewer({ projectId, file, onClose }) {
                     background: 'hsla(var(--accent), 0.08)'
                   }}
                   onClick={(e)=>{ e.stopPropagation(); removeHighlight(idx); }}
-                  title="Klicken zum Entfernen"
+                  title="Click to remove"
                 />
               ))}
               {/* Drawing overlay */}
@@ -119,20 +119,20 @@ export default function DocumentViewer({ projectId, file, onClose }) {
           {!isImage && isPDF && (
             <div className="w-full h-full flex flex-col items-center justify-center p-6">
               <div className="w-full h-full flex flex-col">
-                <p className="text-on-muted mb-3 text-center">PDF-Vorschau</p>
+                <p className="text-on-muted mb-3 text-center">PDF Preview</p>
                 <object data={file.previewUrl} type="application/pdf" className="w-full flex-1 rounded-lg border border-token">
                   <div className="flex flex-col items-center justify-center h-full gap-4 text-on-muted">
-                    <p>PDF kann nicht angezeigt werden.</p>
-                    <a href={file.previewUrl} download={file.name} className="px-4 py-2 rounded-lg bg-cyan-500 text-white hover:bg-cyan-600">📥 Herunterladen</a>
+                    <p>PDF cannot be displayed.</p>
+                    <a href={file.previewUrl} download={file.name} className="px-4 py-2 rounded-lg bg-cyan-500 text-white hover:bg-cyan-600">📥 Download</a>
                   </div>
                 </object>
-                <p className="text-xs text-on-muted mt-2 text-center">Hinweis: Highlights für PDFs werden im nächsten Schritt mit pdf.js ergänzt.</p>
+                <p className="text-xs text-on-muted mt-2 text-center">Note: PDF highlights will be added next using pdf.js.</p>
               </div>
             </div>
           )}
 
           {!isImage && !isPDF && (
-            <div className="p-8 text-on-muted">Dieser Dateityp wird aktuell nicht direkt angezeigt.</div>
+            <div className="p-8 text-on-muted">This file type is not currently displayed directly.</div>
           )}
         </div>
       </motion.div>

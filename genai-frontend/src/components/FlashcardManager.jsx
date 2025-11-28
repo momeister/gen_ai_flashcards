@@ -25,7 +25,7 @@ const FlashcardManager = ({ onBack }) => {
     const newCard = {
       id: Date.now(),
       ...card,
-      level: 'neu', // neu, nicht_sicher, kann_ich
+      level: 'new', // new, unsure, know_it
       lastReviewed: null,
       reviewCount: 0,
       createdAt: new Date().toISOString(),
@@ -40,7 +40,7 @@ const FlashcardManager = ({ onBack }) => {
   };
 
   const deleteFlashcard = (id) => {
-    if (confirm('Möchten Sie diese Karte wirklich löschen?')) {
+    if (confirm('Do you really want to delete this card?')) {
       setFlashcards(flashcards.filter(card => card.id !== id));
     }
   };
@@ -106,16 +106,16 @@ const FlashcardManager = ({ onBack }) => {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span>Zurück zur Hauptseite</span>
+            <span>Back to Home</span>
           </button>
 
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-cyan-400 mb-2">
-              Anki Lernkarten System
+              Anki Flashcard System
             </h1>
             <p className="text-zinc-400">
-              Erstellen, bearbeiten und lernen Sie mit Karteikarten
+              Create, edit and study with flashcards
             </p>
           </div>
 
@@ -129,7 +129,7 @@ const FlashcardManager = ({ onBack }) => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                <span>Neue Karte erstellen</span>
+                <span>Create New Card</span>
               </div>
             </button>
 
@@ -143,7 +143,7 @@ const FlashcardManager = ({ onBack }) => {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
-                    <span>Lernen starten ({getCardsToReview().length})</span>
+                    <span>Start Studying ({getCardsToReview().length})</span>
                   </div>
                 </button>
 
@@ -155,7 +155,7 @@ const FlashcardManager = ({ onBack }) => {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    <span>Nach Anki exportieren</span>
+                    <span>Export to Anki</span>
                   </div>
                 </button>
               </>
@@ -166,23 +166,23 @@ const FlashcardManager = ({ onBack }) => {
           {flashcards.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
               <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4">
-                <div className="text-zinc-400 text-sm mb-1">Gesamt</div>
+                <div className="text-zinc-400 text-sm mb-1">Total</div>
                 <div className="text-3xl font-bold text-cyan-400">{flashcards.length}</div>
               </div>
               <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4">
-                <div className="text-zinc-400 text-sm mb-1">Neu für mich</div>
+                <div className="text-zinc-400 text-sm mb-1">New</div>
                 <div className="text-3xl font-bold text-cyan-400">
                   {flashcards.filter(c => c.level === 'neu').length}
                 </div>
               </div>
               <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4">
-                <div className="text-zinc-400 text-sm mb-1">Nicht sicher</div>
+                <div className="text-zinc-400 text-sm mb-1">Unsure</div>
                 <div className="text-3xl font-bold text-yellow-400">
                   {flashcards.filter(c => c.level === 'nicht_sicher').length}
                 </div>
               </div>
               <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4">
-                <div className="text-zinc-400 text-sm mb-1">Kann ich</div>
+                <div className="text-zinc-400 text-sm mb-1">Know it</div>
                 <div className="text-3xl font-bold text-green-400">
                   {flashcards.filter(c => c.level === 'kann_ich').length}
                 </div>
@@ -207,10 +207,10 @@ const FlashcardManager = ({ onBack }) => {
                 />
               </svg>
               <p className="text-zinc-400 text-lg">
-                Noch keine Lernkarten vorhanden
+                No flashcards yet
               </p>
               <p className="text-zinc-500 text-sm mt-2">
-                Erstellen Sie Ihre erste Karte, um mit dem Lernen zu beginnen
+                Create your first card to begin studying
               </p>
             </div>
           ) : (
@@ -232,11 +232,11 @@ const FlashcardManager = ({ onBack }) => {
                       </div>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <div className="text-xs text-zinc-500 mb-1">Frage:</div>
+                          <div className="text-xs text-zinc-500 mb-1">Question:</div>
                           <div className="text-zinc-200 whitespace-pre-wrap">{card.front}</div>
                         </div>
                         <div>
-                          <div className="text-xs text-zinc-500 mb-1">Antwort:</div>
+                          <div className="text-xs text-zinc-500 mb-1">Answer:</div>
                           <div className="text-zinc-300 whitespace-pre-wrap">{card.back}</div>
                         </div>
                       </div>
@@ -245,7 +245,7 @@ const FlashcardManager = ({ onBack }) => {
                       <button
                         onClick={() => handleEdit(card)}
                         className="p-2 text-cyan-400 hover:bg-cyan-400/10 rounded transition-colors"
-                        title="Bearbeiten"
+                        title="Edit"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -254,7 +254,7 @@ const FlashcardManager = ({ onBack }) => {
                       <button
                         onClick={() => deleteFlashcard(card.id)}
                         className="p-2 text-red-400 hover:bg-red-400/10 rounded transition-colors"
-                        title="Löschen"
+                        title="Delete"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

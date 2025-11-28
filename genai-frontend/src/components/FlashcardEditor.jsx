@@ -14,7 +14,7 @@ const FlashcardEditor = ({ card, onSave, onClose }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!front.trim() || !back.trim()) {
-      alert('Bitte füllen Sie beide Felder aus');
+      alert('Please fill in both fields');
       return;
     }
     onSave({ front: front.trim(), back: back.trim() });
@@ -26,7 +26,7 @@ const FlashcardEditor = ({ card, onSave, onClose }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-zinc-800">
           <h2 className="text-2xl font-bold text-cyan-400">
-            {card ? 'Karte bearbeiten' : 'Neue Karte erstellen'}
+            {card ? 'Edit Card' : 'Create New Card'}
           </h2>
           <button
             onClick={onClose}
@@ -43,7 +43,7 @@ const FlashcardEditor = ({ card, onSave, onClose }) => {
           {/* Front (Question) */}
           <div>
             <label className="block text-sm font-semibold text-zinc-300 mb-2">
-              Vorderseite (Frage)
+              Front (Question)
             </label>
             <textarea
               value={front}
@@ -58,7 +58,7 @@ const FlashcardEditor = ({ card, onSave, onClose }) => {
           {/* Back (Answer) */}
           <div>
             <label className="block text-sm font-semibold text-zinc-300 mb-2">
-              Rückseite (Antwort)
+              Back (Answer)
             </label>
             <textarea
               value={back}
@@ -73,16 +73,16 @@ const FlashcardEditor = ({ card, onSave, onClose }) => {
           {/* Preview */}
           {(front || back) && (
             <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-zinc-400 mb-3">Vorschau:</h3>
+              <h3 className="text-sm font-semibold text-zinc-400 mb-3">Preview:</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-cyan-400 mb-1">Frage:</div>
+                  <div className="text-xs text-cyan-400 mb-1">Question:</div>
                   <div className="text-zinc-200 text-sm whitespace-pre-wrap">
                     {front || '...'}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-cyan-400 mb-1">Antwort:</div>
+                  <div className="text-xs text-cyan-400 mb-1">Answer:</div>
                   <div className="text-zinc-200 text-sm whitespace-pre-wrap">
                     {back || '...'}
                   </div>
@@ -98,13 +98,13 @@ const FlashcardEditor = ({ card, onSave, onClose }) => {
               onClick={onClose}
               className="px-6 py-2 text-zinc-400 hover:text-zinc-200 transition-colors"
             >
-              Abbrechen
+              Cancel
             </button>
             <button
               type="submit"
               className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
             >
-              {card ? 'Speichern' : 'Erstellen'}
+              {card ? 'Save' : 'Create'}
             </button>
           </div>
         </form>

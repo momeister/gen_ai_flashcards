@@ -25,7 +25,7 @@ const FlashcardStudy = ({ cards, onUpdate, onClose }) => {
     if (currentIndex < cards.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      alert(`Glückwunsch! Sie haben ${studiedCount + 1} Karten wiederholt.`);
+      alert(`Congrats! You reviewed ${studiedCount + 1} cards.`);
       onClose();
     }
   };
@@ -42,7 +42,7 @@ const FlashcardStudy = ({ cards, onUpdate, onClose }) => {
         {/* Header */}
         <div className="p-6 border-b border-zinc-800">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-cyan-400">Lernmodus</h2>
+            <h2 className="text-2xl font-bold text-cyan-400">Study Mode</h2>
             <button
               onClick={onClose}
               className="text-zinc-400 hover:text-zinc-200 transition-colors"
@@ -56,7 +56,7 @@ const FlashcardStudy = ({ cards, onUpdate, onClose }) => {
           {/* Progress */}
           <div>
             <div className="flex items-center justify-between text-sm text-zinc-400 mb-2">
-              <span>Fortschritt</span>
+              <span>Progress</span>
               <span>{currentIndex + 1} / {cards.length}</span>
             </div>
             <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
@@ -79,7 +79,7 @@ const FlashcardStudy = ({ cards, onUpdate, onClose }) => {
             <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
               <div className="text-center">
                 <div className="text-sm text-zinc-500 mb-4">
-                  {isFlipped ? 'Antwort' : 'Frage'}
+                  {isFlipped ? 'Answer' : 'Question'}
                 </div>
                 <div className="text-2xl text-zinc-100 whitespace-pre-wrap">
                   {isFlipped ? currentCard.back : currentCard.front}
@@ -88,7 +88,7 @@ const FlashcardStudy = ({ cards, onUpdate, onClose }) => {
 
               {!isFlipped && (
                 <div className="absolute bottom-4 text-sm text-zinc-500">
-                  Klicken zum Umdrehen
+                  Click to flip
                 </div>
               )}
             </div>
@@ -117,7 +117,7 @@ const FlashcardStudy = ({ cards, onUpdate, onClose }) => {
           {isFlipped && (
             <div className="mt-8">
               <p className="text-center text-zinc-400 mb-4">
-                Wie gut kannten Sie diese Antwort?
+                How well did you know this answer?
               </p>
               <div className="grid grid-cols-3 gap-4">
                 <button
@@ -125,8 +125,8 @@ const FlashcardStudy = ({ cards, onUpdate, onClose }) => {
                   className="p-4 bg-cyan-500/10 border-2 border-cyan-500/30 text-cyan-400 rounded-lg hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all"
                 >
                   <div className="text-3xl mb-2">🆕</div>
-                  <div className="font-semibold mb-1">Neu für mich</div>
-                  <div className="text-xs opacity-75">Öfter wiederholen</div>
+                  <div className="font-semibold mb-1">New to me</div>
+                  <div className="text-xs opacity-75">Repeat more often</div>
                 </button>
 
                 <button
@@ -134,8 +134,8 @@ const FlashcardStudy = ({ cards, onUpdate, onClose }) => {
                   className="p-4 bg-yellow-500/10 border-2 border-yellow-500/30 text-yellow-400 rounded-lg hover:bg-yellow-500/20 hover:border-yellow-500/50 transition-all"
                 >
                   <div className="text-3xl mb-2">🤔</div>
-                  <div className="font-semibold mb-1">Nicht sicher</div>
-                  <div className="text-xs opacity-75">Regelmäßig üben</div>
+                  <div className="font-semibold mb-1">Not sure</div>
+                  <div className="text-xs opacity-75">Practice regularly</div>
                 </button>
 
                 <button
@@ -143,8 +143,8 @@ const FlashcardStudy = ({ cards, onUpdate, onClose }) => {
                   className="p-4 bg-green-500/10 border-2 border-green-500/30 text-green-400 rounded-lg hover:bg-green-500/20 hover:border-green-500/50 transition-all"
                 >
                   <div className="text-3xl mb-2">✅</div>
-                  <div className="font-semibold mb-1">Kann ich</div>
-                  <div className="text-xs opacity-75">Gut beherrscht</div>
+                  <div className="font-semibold mb-1">Know it</div>
+                  <div className="text-xs opacity-75">Well mastered</div>
                 </button>
               </div>
             </div>
@@ -152,7 +152,7 @@ const FlashcardStudy = ({ cards, onUpdate, onClose }) => {
 
           {/* Keyboard Shortcuts Hint */}
           <div className="mt-6 text-center text-xs text-zinc-600">
-            💡 Tipp: Klicken Sie auf die Karte, um sie umzudrehen
+            💡 Tip: Click the card to flip it
           </div>
         </div>
       </div>

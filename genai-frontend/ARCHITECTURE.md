@@ -1,71 +1,71 @@
 # GenAI Frontend
 
-React-Anwendung für Flashcard-Management mit PDF-Viewer und Backend-Integration.
+React application for flashcard management with PDF viewer and backend integration.
 
-## 🏗️ Architektur
+## 🏗️ Architecture
 
-### Modulare API-Struktur
+### Modular API Structure
 ```
 src/
 ├── utils/
 │   └── api/
-│       ├── index.js        # Entry Point, Re-Exports
+│       ├── index.js        # Entry point, re-exports
 │       ├── base.js         # Core request(), APIError
 │       ├── projects.js     # projectsAPI (CRUD)
-│       ├── flashcards.js   # flashcardsAPI (CRUD + Level)
-│       └── files.js        # uploadsAPI (Upload, Download, Extraktion)
+│       ├── flashcards.js   # flashcardsAPI (CRUD + level)
+│       └── files.js        # uploadsAPI (upload, download, extraction)
 ├── components/
-│   ├── Home.jsx           # Projekt-Übersicht (Backend-driven)
-│   ├── UploadZone.jsx     # Multi-File-Upload mit Projektname
-│   ├── DocumentViewer.jsx # PDF/Bild-Inline-Viewer
+│   ├── Home.jsx           # Project overview (backend-driven)
+│   ├── UploadZone.jsx     # Multi-file upload with project naming
+│   ├── DocumentViewer.jsx # PDF/Image inline viewer
 │   └── flashcards/
-│       ├── FlashcardDeck.jsx   # Flashcard-Editor (Backend-CRUD)
-│       └── FlashcardStudy.jsx  # Lernmodus mit Level-Updates
-└── App.jsx                # Routing & Layout
+│       ├── FlashcardDeck.jsx   # Flashcard editor (backend CRUD)
+│       └── FlashcardStudy.jsx  # Study mode with level updates
+└── App.jsx                # Routing & layout
 ```
 
 ## ✨ Features
-- **Backend-Integration**: Vollständig auf FastAPI-Backend migriert (kein localStorage)
-- **Projekt-Management**: Erstellen, Umbenennen, Löschen von Projekten
-- **Multi-File-Upload**: Drag & Drop für PDFs/Bilder mit OCR-Extraktion
-- **PDF-Viewer**: Inline-Anzeige ohne Download-Prompt
-- **Flashcard-Editor**: Vollständiges CRUD + Important-Toggle
-- **Lernmodus**: Spaced Repetition mit Level-System (neu → nicht sicher → kann ich)
-- **Responsive Design**: Tailwind CSS mit Framer Motion Animationen
+- **Backend integration**: Fully migrated to FastAPI (no localStorage business logic)
+- **Project management**: Create, rename, delete projects
+- **Multi-file upload**: Drag & drop PDFs/images with OCR extraction
+- **PDF viewer**: Inline rendering (no forced download prompt)
+- **Flashcard editor**: Full CRUD + important toggle
+- **Study mode**: Spaced repetition level system (new → uncertain → known)
+- **Responsive design**: Tailwind CSS + Framer Motion animations
 
 ## 🚀 Installation
 
-### 1. Abhängigkeiten installieren
+### 1. Install dependencies
 ```bash
 cd genai-frontend
 npm install
 ```
 
-### 2. Backend starten
+### 2. Start backend
 ```bash
 cd ../genau-backend
 python -m uvicorn main:app --reload --port 8000
 ```
 
-### 3. Frontend starten
+### 3. Start frontend
 ```bash
 npm run dev
 ```
 
-App läuft auf: **http://localhost:5173**
+App runs at: **http://localhost:5173**
 
-## 📚 API-Konfiguration
+## 📚 API Configuration
 
 In `src/utils/api/base.js`:
 ```javascript
 const BASE_URL = 'http://localhost:8000';
 ```
 
-Alle API-Calls nutzen die modulare Struktur:
+All API calls use the modular structure:
 ```javascript
 import { projectsAPI, flashcardsAPI, uploadsAPI } from './utils/api';
 
-// Projekte
+// Projects
 const projects = await projectsAPI.getAll();
 await projectsAPI.create({ title: 'Neues Projekt' });
 await projectsAPI.update(id, { title: 'Umbenannt' });
@@ -87,52 +87,52 @@ const pdfUrl = uploadsAPI.rawFileUrl(fileId);
 const extracted = await uploadsAPI.getExtracted(fileId, 'md');
 ```
 
-## 🎨 Komponenten-Übersicht
+## 🎨 Component Overview
 
 ### Home.jsx
-- **Funktion**: Projekt-Übersicht mit Grid-Layout
-- **Backend-Calls**: `projectsAPI.getAll()`, `projectsAPI.update()`, `projectsAPI.delete()`
-- **Features**: Umbenennen-Modal, Löschen-Bestätigung, Reload-Button
+- **Purpose**: Project overview grid
+- **Backend calls**: `projectsAPI.getAll()`, `projectsAPI.update()`, `projectsAPI.delete()`
+- **Features**: Rename prompt, delete confirmation, reload button
 
 ### UploadZone.jsx
-- **Funktion**: Projekt-Erstellung + Multi-File-Upload
-- **Backend-Calls**: `projectsAPI.create()`, `uploadsAPI.upload()`
-- **Features**: Drag & Drop, Fortschrittsanzeige, automatische Navigation
-- **Callback**: `onCreated(projectId)` nach erfolgreichem Upload
+- **Purpose**: Project creation + multi-file upload
+- **Backend calls**: `projectsAPI.create()`, `uploadsAPI.upload()`
+- **Features**: Drag & drop, progress feedback, automatic navigation
+- **Callback**: `onCreated(projectId)` after successful upload
 
 ### FlashcardDeck.jsx
-- **Funktion**: Flashcard-Verwaltung mit Editor
-- **Backend-Calls**: `flashcardsAPI.getAll()`, `flashcardsAPI.create()`, `flashcardsAPI.update()`, `flashcardsAPI.delete()`
-- **Features**: Important-Toggle, Level-Mapping (0→neu, 1→nicht sicher, 2→kann ich), Datei-Liste
+- **Purpose**: Flashcard management + editor modal
+- **Backend calls**: `flashcardsAPI.getByProject()`, `flashcardsAPI.create()`, `flashcardsAPI.update()`, `flashcardsAPI.delete()`
+- **Features**: Important toggle, level mapping (0→new, 1→uncertain, 2→known), file list
 
 ### DocumentViewer.jsx
-- **Funktion**: Modal für PDF/Bild-Anzeige
-- **Backend-Calls**: `uploadsAPI.rawFileUrl(fileId)`
-- **Features**: Inline-Viewing mit `<object>`, Download-Button, Highlights für Bilder
+- **Purpose**: Modal for PDF/image viewing
+- **Backend calls**: `uploadsAPI.rawFileUrl(fileId)`
+- **Features**: Inline `<object>` PDF rendering, download button, image highlight rectangles
 
 ### FlashcardStudy.jsx
-- **Funktion**: Interaktiver Lernmodus
-- **Backend-Calls**: `flashcardsAPI.getAll()`, `flashcardsAPI.updateLevel()`
-- **Features**: Karten umdrehen, Level-Buttons (✗ / ? / ✓), Review-Counter, Fortschrittsanzeige
+- **Purpose**: Interactive study session
+- **Backend calls**: `flashcardsAPI.getByProject()`, `flashcardsAPI.updateLevel()`
+- **Features**: Flip cards, level buttons (✗ / ? / ✓), review counter, progress bar
 
-## 🗂️ Datenfluss
+## 🗂️ Data Flow
 
-1. **Upload**: `UploadZone` → `uploadsAPI.upload()` → Backend verarbeitet PDF/Bild → `onCreated(projectId)` → Navigation zu `/flashcards/${projectId}`
-2. **Flashcard-Erstellung**: `FlashcardDeck` → `flashcardsAPI.create()` → Backend speichert in DB → State-Update
-3. **Important-Toggle**: `FlashcardDeck` → `flashcardsAPI.update(projectId, cardId, { important: newValue })` → Backend PATCH → State-Update
-4. **Lernmodus**: `FlashcardStudy` → `flashcardsAPI.updateLevel(projectId, cardId, { level: newLevel })` → Backend erhöht `review_count` → State-Update
-5. **PDF-Anzeige**: `DocumentViewer` → `uploadsAPI.rawFileUrl(fileId)` → Backend sendet File mit `Content-Disposition: inline` → Browser rendert inline
+1. **Upload**: `UploadZone` → `uploadsAPI.upload()` → backend extracts content → `onCreated(projectId)` → navigate to `/flashcards/${projectId}`
+2. **Create flashcard**: `FlashcardDeck` → `flashcardsAPI.create()` → DB persist → state refresh
+3. **Important toggle**: `FlashcardDeck` → `flashcardsAPI.update(projectId, cardId, { important })` → backend PATCH → state refresh
+4. **Study level update**: `FlashcardStudy` → `flashcardsAPI.updateLevel()` → backend increments `review_count` → state refresh
+5. **PDF view**: `DocumentViewer` → `uploadsAPI.rawFileUrl(fileId)` → backend serves with `Content-Disposition: inline` → browser renders
 
 ## 🐛 Debugging
 
-### API-Fehler tracken
+### Track API errors
 Console logs in `src/utils/api/base.js`:
 ```javascript
 console.log('[API] Request:', url, options);
 console.log('[API] Response:', data);
 ```
 
-### Flashcard-Update-Logs
+### Flashcard update logs
 In `flashcards.js`:
 ```javascript
 console.log('[API] PATCH flashcard:', { projectId, cardId, updates });
@@ -145,21 +145,21 @@ console.log('[API] PATCH flashcard:', { projectId, cardId, updates });
 
 ## 🛠️ Development
 
-### Neue API-Funktion hinzufügen
-1. Entsprechendes Modul öffnen (z.B. `api/projects.js`)
-2. Neue Funktion hinzufügen:
+### Add a new API function
+1. Open the module (e.g. `api/projects.js`)
+2. Add new function:
 ```javascript
 export const projectsAPI = {
   // ... existing methods
   archive: (projectId) => request(`/projects/${projectId}/archive`, { method: 'POST' })
 };
 ```
-3. In Komponente importieren: `import { projectsAPI } from '../utils/api';`
+3. Import in component: `import { projectsAPI } from '../utils/api';`
 
-### Neue Komponente erstellen
-1. Datei in `src/components/` erstellen
-2. API-Import: `import { projectsAPI, flashcardsAPI } from '../utils/api';`
-3. State mit Backend synchronisieren:
+### Create a new component
+1. Create file in `src/components/`
+2. Import API: `import { projectsAPI, flashcardsAPI } from '../utils/api';`
+3. Sync state with backend:
 ```jsx
 useEffect(() => {
   projectsAPI.getAll().then(setProjects);
@@ -168,14 +168,14 @@ useEffect(() => {
 
 ## 📝 Notes
 
-- **CORS**: Backend muss `http://localhost:5173` in CORS-Whitelist haben
-- **Error-Handling**: `APIError` Klasse wirft strukturierte Fehler mit `status`, `message`, `detail`
-- **Empty Responses**: `base.js` behandelt `204 No Content` automatisch
-- **File URLs**: `rawFileUrl()` generiert URL ohne API-Call (nur für `<object>`, `<img>` tags)
-- **Level-Mapping**: `neu → 0`, `nicht_sicher → 1`, `kann_ich → 2` (in beide Richtungen konvertiert)
+- **CORS**: Backend must allow `http://localhost:5173`
+- **Error handling**: `APIError` carries `status`, `message`, `data`
+- **Empty responses**: `base.js` gracefully handles 204 / missing body
+- **File URLs**: `rawFileUrl()` builds direct URL (for `<object>`, `<img>`)
+- **Level mapping**: `new → 0`, `uncertain → 1`, `known → 2` (convert both ways)
 
 ## 🚧 Known Issues
 
-- **Important-Toggle**: 422 Error bei PATCH-Request (Backend-Validierung?)
-  - Workaround: Debug-Logs aktiviert in `flashcards.js` und Backend `routers/flashcards.py`
-  - Next Step: Backend-Logs prüfen nach Click auf Important-Button
+- **Important toggle**: 422 error on PATCH (backend validation?)
+  - Workaround: Debug logs enabled in `flashcards.js` & backend `routers/flashcards.py`
+  - Next step: Inspect backend logs after clicking important button
