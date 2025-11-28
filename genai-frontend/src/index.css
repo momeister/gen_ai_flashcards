@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --accent: 200 90% 50%;
+    --accent-50: 200 90% 95%;
+    --accent-100: 200 90% 90%;
+    --accent-300: 200 90% 70%;
+    --accent-700: 200 90% 30%;
+    --secondary: 20 70% 50%;
+    --secondary-300: 20 70% 70%;
+    --tertiary: 120 60% 50%;
+    --surface: 0 0% 100%;
+    --surface-variant: 0 0% 96%;
+    --card: 0 0% 100%;
+    --border: 0 0% 85%;
+    --on-surface: 0 0% 12%;
+    --on-muted: 0 0% 35%;
+    --on-primary: 0 0% 100%;
+    --on-secondary: 0 0% 100%;
+    --success: 150 65% 45%;
+    --warning: 40 90% 50%;
+    --danger: 0 80% 50%;
+  }
+  html, body, #root {
+    height: 100%;
+    min-height: 100%;
+  }
+  body {
+    background: hsl(var(--surface));
+    color: hsl(var(--on-surface));
+  }
+  .dark body {
+    background: hsl(var(--surface));
+    color-scheme: dark;
+  }
+  body.overflow-hidden { overflow: hidden; }
+}
+
+@layer components {
+  .bg-surface { background-color: hsl(var(--surface)); }
+  .bg-surface-variant { background-color: hsl(var(--surface-variant)); }
+  .bg-card { background-color: hsl(var(--card)); }
+  .border-token { border-color: hsl(var(--border)); }
+  .text-on-surface { color: hsl(var(--on-surface)); }
+  .text-on-muted { color: hsl(var(--on-muted)); }
+  .btn { display:inline-flex; align-items:center; justify-content:center; border-radius:0.5rem; padding:0.5rem 0.75rem; font-size:0.875rem; font-weight:600; transition:all 150ms; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+  .btn:active { transform: scale(0.95); }
+  .btn-primary { background-color: hsl(var(--accent)); color: hsl(var(--on-primary)); }
+  .btn-primary:hover { filter: brightness(1.05); }
+  .btn-secondary { background-color: hsl(var(--secondary)); color: hsl(var(--on-secondary)); }
+  .btn-secondary:hover { filter: brightness(1.05); }
+  .chip { font-size:0.75rem; padding:0.25rem 0.5rem; border-radius:9999px; border-width:1px; border-style:solid; border-color: hsl(var(--border)); }
+}
