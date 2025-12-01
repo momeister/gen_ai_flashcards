@@ -13,7 +13,7 @@ GenAI/
 │   │   └── App.jsx
 │   └── ARCHITECTURE.md     # Frontend-Dokumentation
 │
-├── genau-backend/           # FastAPI Backend
+├── genai-backend/           # FastAPI Backend
 │   ├── routers/            # API-Routen (projects, flashcards, files)
 │   ├── models/             # SQLAlchemy ORM
 │   ├── services/           # PDF/Bild-Extraktion
@@ -26,7 +26,7 @@ GenAI/
 
 ### 1. Start Backend
 ```bash
-cd genau-backend
+cd genai-backend
 pip install -r requirements.txt
 python -m uvicorn main:app --reload --port 8000
 ```
