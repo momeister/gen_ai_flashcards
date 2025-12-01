@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel, Field
 from typing import Optional
+import os
 from models.db import get_db
 from models.tables import Project as ProjectORM, Flashcard as FlashcardORM
 
@@ -71,10 +72,30 @@ def update_project(project_id: str, updates: ProjectUpdate, db: Session = Depend
 
 @router.delete("/{project_id}")
 def delete_project(project_id: str, db: Session = Depends(get_db)):
-    """Delete project"""
+    """Delete project and remove related files from disk"""
     obj = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not obj:
         raise HTTPException(status_code=404, detail="Project not found")
+    # Remove files from filesystem (raw + extracted)
+    try:
+        upload_dir = "uploads"
+        extracted_dir = os.path.join(upload_dir, "extracted")
+        for f in list(obj.files or []):
+            if f.stored_path and os.path.exists(f.stored_path):
+                try:
+                    os.remove(f.stored_path)
+                except Exception as e:
+                    print(f"Warning: failed to remove file {f.stored_path}: {e}")
+            # Remove extracted artifacts (.md and .json if present)
+            for ext in (".md", ".json"):
+                extracted_path = os.path.join(extracted_dir, f"{f.id}{ext}")
+                if os.path.exists(extracted_path):
+                    try:
+                        os.remove(extracted_path)
+                    except Exception as e:
+                        print(f"Warning: failed to remove extracted file {extracted_path}: {e}")
+    except Exception as e:
+        print(f"Warning during filesystem cleanup: {e}")
     db.delete(obj)
     db.commit()
     return {"status": "success"}

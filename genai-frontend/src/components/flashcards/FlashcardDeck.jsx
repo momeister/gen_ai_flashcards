@@ -53,7 +53,7 @@ export default function FlashcardDeck({ projectId }) {
       if (editing) {
         await flashcardsAPI.update(projectId, editing.id, { question: data.front, answer: data.back });
       } else {
-        const created = await flashcardsAPI.create(projectId, { question: data.front, answer: data.back, level: levelMap['neu'] });
+        const created = await flashcardsAPI.create(projectId, { question: data.front, answer: data.back, level: levelMap['new'] });
       }
       const backendCards = await flashcardsAPI.getByProject(projectId);
       const mapped = backendCards.map(c => ({ id: c.id, front: c.question, back: c.answer, level: levelFromNumber(c.level), reviewCount: c.review_count || 0, createdAt: Date.now(), lastReviewed: null, important: !!(c.important) }));
