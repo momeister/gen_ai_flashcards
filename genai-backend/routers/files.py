@@ -17,10 +17,14 @@ UPLOAD_DIR = "uploads"
 LECTURE_NOTES_DIR = os.path.join(UPLOAD_DIR, "lecture_notes")
 EXTENDED_INFO_DIR = os.path.join(UPLOAD_DIR, "extended_info")
 EXTRACTED_DIR = os.path.join(UPLOAD_DIR, "extracted")
+EXTRACTED_LECTURE_DIR = os.path.join(EXTRACTED_DIR, "lecture_notes")
+EXTRACTED_EXTENDED_DIR = os.path.join(EXTRACTED_DIR, "extended_info")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(LECTURE_NOTES_DIR, exist_ok=True)
 os.makedirs(EXTENDED_INFO_DIR, exist_ok=True)
 os.makedirs(EXTRACTED_DIR, exist_ok=True)
+os.makedirs(EXTRACTED_LECTURE_DIR, exist_ok=True)
+os.makedirs(EXTRACTED_EXTENDED_DIR, exist_ok=True)
 
 extractor = ContentExtractor()
 
@@ -80,13 +84,14 @@ async def upload_files(
             # Extract text from PDF/image
             processed = extractor.process_file(file_path, f.filename)
             
-            # Save as JSON
-            extracted_json_path = os.path.join(EXTRACTED_DIR, f"{file_record.id}.json")
+            # Save as JSON (segregated by category)
+            target_extracted_dir = EXTRACTED_LECTURE_DIR if file_record.category == "lecture_notes" else EXTRACTED_EXTENDED_DIR
+            extracted_json_path = os.path.join(target_extracted_dir, f"{file_record.id}.json")
             with open(extracted_json_path, "w", encoding="utf-8") as jf:
                 jf.write(processed.json())
             
             # Save as Markdown (better for LLM processing)
-            extracted_md_path = os.path.join(EXTRACTED_DIR, f"{file_record.id}.md")
+            extracted_md_path = os.path.join(target_extracted_dir, f"{file_record.id}.md")
             md_lines = [f"# {processed.filename}\n", f"**Total Pages:** {processed.total_pages}\n\n"]
             for chunk in processed.chunks:
                 md_lines.append(f"## Page {chunk.page_number}\n\n{chunk.text}\n\n---\n\n")
@@ -183,9 +188,14 @@ def get_file_extracted(file_id: str, format: str = "json"):
     - format=md: Markdown format for LLM processing
     """
     ext = "json" if format == "json" else "md"
-    extracted_path = os.path.join(EXTRACTED_DIR, f"{file_id}.{ext}")
+    # Try lecture_notes first, then extended_info
+    candidates = [
+        os.path.join(EXTRACTED_LECTURE_DIR, f"{file_id}.{ext}"),
+        os.path.join(EXTRACTED_EXTENDED_DIR, f"{file_id}.{ext}")
+    ]
+    extracted_path = next((p for p in candidates if os.path.exists(p)), None)
     
-    if not os.path.exists(extracted_path):
+    if not extracted_path:
         raise HTTPException(status_code=404, detail="Extraction file not found")
     
     with open(extracted_path, "r", encoding="utf-8") as f:

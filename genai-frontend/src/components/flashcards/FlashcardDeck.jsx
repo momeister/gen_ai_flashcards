@@ -22,6 +22,16 @@ export default function FlashcardDeck({ projectId }) {
   const [draftSets, setDraftSets] = useState([]);
   const [files, setFiles] = useState([]);
   const [viewerFile, setViewerFile] = useState(null);
+  // Folders (client-side grouping)
+  const [folders, setFolders] = useState(() => {
+    const stored = localStorage.getItem('flashcardFolders');
+    return stored ? JSON.parse(stored) : [
+      { id: 'generated', name: 'Generierte Karten' },
+      { id: 'lecture1', name: 'Vorlesung 1' },
+      { id: 'custom', name: 'Eigener Ordner' },
+    ];
+  });
+  const [activeFolder, setActiveFolder] = useState('all');
   // Drag and drop state
   const [draggedCard, setDraggedCard] = useState(null);
   const [hoverTarget, setHoverTarget] = useState(null);
@@ -65,6 +75,11 @@ export default function FlashcardDeck({ projectId }) {
       window.removeEventListener('pointerup', handleUp);
     };
   }, [draggedCard, hoverTarget, setCards]);
+
+  // Persist folders
+  useEffect(() => {
+    localStorage.setItem('flashcardFolders', JSON.stringify(folders));
+  }, [folders]);
 
   useEffect(()=>{
     // Load flashcards from backend
@@ -194,8 +209,9 @@ export default function FlashcardDeck({ projectId }) {
     important: cards.filter(c=>c.important).length,
   };
 
-  // Derived list based on search + filter
+  // Derived list based on search + filter + folder
   const filtered = cards.filter(c => {
+    if (activeFolder !== 'all' && c.folderId !== activeFolder) return false;
     if (filter !== 'all' && c.level !== filter) return false;
     if (!query.trim()) return true;
     const q = query.toLowerCase();
@@ -316,6 +332,31 @@ export default function FlashcardDeck({ projectId }) {
         </motion.button>
       </div>
 
+      {/* Folder Management */}
+      <div className="flex flex-wrap items-center gap-3 bg-surface-variant border border-token rounded-xl p-3">
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-on-muted">Ordner:</label>
+          <select value={activeFolder} onChange={e=>{ setActiveFolder(e.target.value); setPage(1); }} className="px-3 py-2 rounded-lg bg-card border border-token text-on-surface">
+            <option value="all">Alle</option>
+            {folders.map(f => (
+              <option key={f.id} value={f.id}>{f.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <input id="newFolderName" placeholder="Neuer Ordner…" className="px-3 py-2 rounded-lg bg-card border border-token text-on-surface w-48 focus:outline-none" />
+          <button className="btn" onClick={()=>{
+            const el = document.getElementById('newFolderName');
+            const name = (el?.value || '').trim();
+            if (!name) return;
+            const id = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+            if (folders.some(f=>f.id===id)) return;
+            setFolders(prev=>[...prev, { id, name }]);
+            if (el) el.value = '';
+          }}>Erstellen</button>
+        </div>
+      </div>
+
       {/* Search, Tabs and Page size */}
       <div className="flex flex-wrap gap-3 items-center justify-between bg-surface-variant border border-token rounded-xl p-3">
         <div className="flex items-center gap-2">
@@ -358,7 +399,12 @@ export default function FlashcardDeck({ projectId }) {
                   ref={(el) => { if (el) cardRefs.current[card.id] = el; }}
                   key={card.id} 
                   layout 
-                  onPointerDown={(e) => { e.preventDefault(); setDraggedCard(card.id); }}
+                  onPointerDown={(e) => {
+                    const handle = e.target.closest('.drag-handle');
+                    if (!handle) return; // only start dragging from handle
+                    e.preventDefault();
+                    setDraggedCard(card.id);
+                  }}
                   initial={{opacity:0, y:20, rotate:rot}} 
                   animate={{
                     opacity: isDragging ? 0.85 : 1,
@@ -368,19 +414,39 @@ export default function FlashcardDeck({ projectId }) {
                   }} 
                   exit={{opacity:0,scale:0.8, rotate:0}}
                   whileHover={{scale:1.03, rotate:0, y:-4, boxShadow:'0 20px 40px rgba(0,0,0,0.3)'}}
-                  className={`relative p-5 pb-8 rounded-lg bg-card shadow-xl transition-all overflow-hidden select-none ${draggedCard? 'cursor-grabbing' : 'cursor-grab'} ${isHoverTarget ? 'ring-4 ring-[hsl(var(--accent))]/40' : ''}`}
+                  className={`relative p-5 pb-8 rounded-lg bg-card shadow-xl transition-all overflow-hidden select-none ${isHoverTarget ? 'ring-4 ring-[hsl(var(--accent))]/40' : ''}`}
                   style={{ transformStyle:'preserve-3d' }}
                 >
-                  {/* Gradient border effect */}
-                  <div className={`absolute inset-0 rounded-lg bg-gradient-to-br ${cardGradient} opacity-60`} style={{ padding: '8px', zIndex: -1 }}>
-                    <div className="w-full h-full bg-card rounded-lg" />
+                  {/* Drag handle (small area to initiate swap) */}
+                  <div className="drag-handle absolute left-2 top-2 w-6 h-6 rounded-md bg-surface-variant border border-token flex items-center justify-center cursor-grab select-none" title="Karte tauschen (ziehen)">
+                    <svg className="w-4 h-4 text-on-muted" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M7 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zM4 9a1 1 0 011-1h11a1 1 0 110 2H5a1 1 0 01-1-1zm3 5a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
+                    </svg>
                   </div>
-                  <div className={`absolute inset-0 rounded-lg border-4 ${cardLevelColor} opacity-40`} />
+                  {/* Gradient border effect (non-interactive) */}
+                  <div className={`absolute inset-0 rounded-lg bg-gradient-to-br ${cardGradient} opacity-60`} style={{ padding: '8px', zIndex: -1, pointerEvents: 'none' }}>
+                    <div className="w-full h-full bg-card rounded-lg" style={{ pointerEvents: 'none' }} />
+                  </div>
+                  <div className={`absolute inset-0 rounded-lg border-4 ${cardLevelColor} opacity-40`} style={{ pointerEvents: 'none' }} />
                   <div className="flex items-start gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex gap-2 mb-2">
+                      <div className="flex gap-2 mb-2 items-center">
                         <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${cardBadgeColor}`}>{card.level.replace('_', ' ')}</span>
                         <span className="text-xs text-zinc-400 dark:text-zinc-500">↻ {card.reviewCount}</span>
+                        <select 
+                          value={card.folderId || ''}
+                          onChange={(e)=>{
+                            const folderId = e.target.value || undefined;
+                            setCards(prev => prev.map(c => c.id===card.id ? { ...c, folderId } : c));
+                          }}
+                          className="ml-auto px-2 py-1 rounded bg-surface-variant border border-token text-on-muted text-xs"
+                          title="Ordner zuweisen"
+                        >
+                          <option value="">– Ohne Ordner –</option>
+                          {folders.map(f => (
+                            <option key={f.id} value={f.id}>{f.name}</option>
+                          ))}
+                        </select>
                       </div>
                       <p className="text-sm text-on-surface whitespace-pre-wrap"><strong>Question:</strong> {card.front}</p>
                       <p className="text-sm text-on-muted whitespace-pre-wrap mt-2"><strong>Answer:</strong> {card.back}</p>
