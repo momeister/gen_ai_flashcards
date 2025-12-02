@@ -20,7 +20,6 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(EXTRACTED_DIR, exist_ok=True)
 
 extractor = ContentExtractor()
-card_generator = CardGenerator()
 
 class FileMeta(BaseModel):
     id: str
@@ -30,16 +29,41 @@ class FileMeta(BaseModel):
 
 
 @router.post("/projects/{project_id}/files", response_model=List[dict])
-async def upload_files(project_id: str, files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
+async def upload_files(
+    project_id: str,
+    files: List[UploadFile] = File(...),
+    provider: str = "lmstudio",
+    openai_api_key: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
     """
     Upload and process files for a project
     - Stores the file on the filesystem
     - Extracts text with OCR (PDF/Image)
     - Stores extraction as JSON and Markdown
+    - Generates flashcards using specified LLM provider
+    
+    Query parameters:
+    - provider: "lmstudio" (default) or "openai"
+    - openai_api_key: Required if provider is "openai"
     """
     project = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Initialize CardGenerator with selected provider
+    try:
+        if provider == "openai":
+            if not openai_api_key:
+                raise HTTPException(
+                    status_code=400,
+                    detail="openai_api_key is required when using OpenAI provider"
+                )
+            generator = CardGenerator(provider="openai", openai_api_key=openai_api_key)
+        else:
+            generator = CardGenerator(provider="lmstudio")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     results = []
     for f in files:
@@ -79,7 +103,7 @@ async def upload_files(project_id: str, files: List[UploadFile] = File(...), db:
                 mf.writelines(md_lines)
             
             # Generate flashcards automatically
-            generated_cards = card_generator.generate_cards_from_document(
+            generated_cards = generator.generate_cards_from_document(
                 document=processed,
                 cards_per_chunk=3,
                 difficulty_level=0

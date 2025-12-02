@@ -1,6 +1,7 @@
 import json
 import requests
-from typing import List, Optional
+from typing import List, Optional, Literal
+from enum import Enum
 from models.schemas import ProcessedDocument, TextChunk
 from pydantic import BaseModel
 
@@ -11,18 +12,45 @@ class GeneratedFlashcard(BaseModel):
     level: int = 0
 
 
+class LLMProvider(str, Enum):
+    """Available LLM providers for card generation."""
+    LMSTUDIO = "lmstudio"
+    OPENAI = "openai"
+
+
 class CardGenerator:
-    """Service for generating flashcards from extracted text using LMStudio."""
+    """Service for generating flashcards from extracted text using LLM providers."""
     
-    def __init__(self, lmstudio_url: str = "http://172.28.112.1:1234/v1"):
+    def __init__(
+        self,
+        provider: Literal["lmstudio", "openai"] = "lmstudio",
+        lmstudio_url: str = "http://172.28.112.1:1234/v1",
+        openai_api_key: Optional[str] = None,
+        openai_model: str = "gpt-4.1-nano"
+    ):
         """
-        Initialize the CardGenerator with LMStudio endpoint.
+        Initialize the CardGenerator with specified LLM provider.
         
         Args:
+            provider: LLM provider to use ("lmstudio" or "openai")
             lmstudio_url: The base URL for LMStudio API (default: local instance)
+            openai_api_key: API key for OpenAI (required if provider is "openai")
+            openai_model: Model name to use with OpenAI (default: gpt-3.5-turbo)
+        
+        Raises:
+            ValueError: If provider is "openai" but no API key is provided
         """
-        self.lmstudio_url = lmstudio_url
-        self.chat_endpoint = f"{lmstudio_url}/chat/completions"
+        self.provider = LLMProvider(provider)
+        self.openai_api_key = openai_api_key
+        self.openai_model = openai_model
+        
+        if self.provider == LLMProvider.LMSTUDIO:
+            self.lmstudio_url = lmstudio_url
+            self.lmstudio_endpoint = f"{lmstudio_url}/chat/completions"
+        elif self.provider == LLMProvider.OPENAI:
+            if not openai_api_key:
+                raise ValueError("OpenAI API key is required when using OpenAI provider")
+            self.openai_endpoint = "https://api.openai.com/v1/chat/completions"
     
     def generate_cards_from_document(
         self, 
@@ -77,7 +105,11 @@ class CardGenerator:
         prompt = self._create_generation_prompt(text, num_cards, difficulty_level)
         
         try:
-            response = self._call_lmstudio(prompt)
+            if self.provider == LLMProvider.LMSTUDIO:
+                response = self._call_lmstudio(prompt)
+            else:  # OPENAI
+                response = self._call_openai(prompt)
+            
             cards = self._parse_response(response)
             
             # Set difficulty level
@@ -160,9 +192,51 @@ JSON Output:"""
         }
         
         response = requests.post(
-            self.chat_endpoint,
+            self.lmstudio_endpoint,
             json=payload,
-            timeout=30
+            timeout=60
+        )
+        response.raise_for_status()
+        
+        result = response.json()
+        return result["choices"][0]["message"]["content"]
+    
+    def _call_openai(self, prompt: str, max_tokens: int = 2000) -> str:
+        """
+        Make a request to OpenAI API.
+        
+        Args:
+            prompt: The prompt to send to the model
+            max_tokens: Maximum tokens in the response
+        
+        Returns:
+            The model's response text
+        
+        Raises:
+            requests.RequestException: If the API call fails
+        """
+        headers = {
+            "Authorization": f"Bearer {self.openai_api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": self.openai_model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "temperature": 0.7,
+            "max_tokens": max_tokens
+        }
+        
+        response = requests.post(
+            self.openai_endpoint,
+            json=payload,
+            headers=headers,
+            timeout=60
         )
         response.raise_for_status()
         

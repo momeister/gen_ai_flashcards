@@ -12,6 +12,9 @@ export default function UploadZone({ onCreated }) {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [errorMessages, setErrorMessages] = useState([]);
+  const [provider, setProvider] = useState('lmstudio');
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   const validate = (file) => {
     if (file.type.startsWith('video/')) return 'Videos are not allowed';
@@ -68,13 +71,16 @@ export default function UploadZone({ onCreated }) {
   const handleUpload = async () => {
     if (files.length === 0) return alert('No files selected');
     if (!projectName.trim()) return alert('Please enter a project name');
+    if (provider === 'openai' && !openaiApiKey.trim()) {
+      return alert('OpenAI API key is required for OpenAI provider');
+    }
     setUploading(true);
     try {
       const pid = await ensureServerProject();
-      console.log('📤 Upload started', { projectId: pid, files: files.length });
-      const result = await uploadsAPI.upload(pid, files);
+      console.log('📤 Upload started', { projectId: pid, files: files.length, provider });
+      const result = await uploadsAPI.upload(pid, files, { provider, openaiApiKey });
       console.log('✅ Upload finished', result);
-      const summary = Array.isArray(result) ? result.map(r=>`${r.file.original_filename}: ${r.processed.chunks?.length||0} sections`).join('\n') : 'n/a';
+      const summary = Array.isArray(result) ? result.map(r=>`${r.file.original_filename}: ${r.cards_count || 0} cards`).join('\n') : 'n/a';
       alert(`✅ ${files.length} file(s) uploaded & processed.\n\n${summary}`);
       setFiles([]);
       setErrorMessages([]);
@@ -100,6 +106,61 @@ export default function UploadZone({ onCreated }) {
         />
         {serverProjectId && (
           <div className="text-xs text-cyan-600 dark:text-cyan-400">Backend Project ID: {serverProjectId}</div>
+        )}
+      </div>
+
+      <div className="space-y-3 p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700">
+        <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">AI Provider for Card Generation</label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              value="lmstudio"
+              checked={provider === 'lmstudio'}
+              onChange={(e) => {
+                setProvider(e.target.value);
+                setShowApiKeyInput(false);
+              }}
+              className="w-4 h-4 text-cyan-500 focus:ring-cyan-500"
+            />
+            <span className="text-sm text-zinc-700 dark:text-zinc-300">LMStudio (Local)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              value="openai"
+              checked={provider === 'openai'}
+              onChange={(e) => {
+                setProvider(e.target.value);
+                setShowApiKeyInput(true);
+              }}
+              className="w-4 h-4 text-cyan-500 focus:ring-cyan-500"
+            />
+            <span className="text-sm text-zinc-700 dark:text-zinc-300">OpenAI</span>
+          </label>
+        </div>
+
+        {provider === 'openai' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="space-y-2 mt-3 pt-3 border-t border-zinc-300 dark:border-zinc-700"
+          >
+            <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">OpenAI API Key</label>
+            <input
+              type={showApiKeyInput ? 'password' : 'password'}
+              value={openaiApiKey}
+              onChange={(e) => setOpenaiApiKey(e.target.value)}
+              placeholder="sk-..."
+              className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500"
+            />
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:text-cyan-400 underline">platform.openai.com/api-keys</a></p>
+          </motion.div>
+        )}
+
+        {provider === 'lmstudio' && (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 pt-2">Make sure LMStudio is running on http://172.28.112.1:1234</p>
         )}
       </div>
       <div className="text-center space-y-2">
