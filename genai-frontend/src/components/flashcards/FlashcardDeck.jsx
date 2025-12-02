@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import FlashcardEditor from './FlashcardEditor';
 import FlashcardStudy from './FlashcardStudy';
-import { loadTestFlashcards } from '../../data/testFlashcards';
+// Test flashcards import removed
 import { motion, AnimatePresence } from 'framer-motion';
 import { flashcardsAPI, uploadsAPI } from '../../utils/api';
 import DocumentViewer from '../DocumentViewer';
@@ -17,6 +17,9 @@ export default function FlashcardDeck({ projectId }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [studyFilter, setStudyFilter] = useState('all'); // all | new | unsure | know_it | important
+  // Generation controls
+  const [generationCount, setGenerationCount] = useState(10);
+  const [draftSets, setDraftSets] = useState([]);
   const [files, setFiles] = useState([]);
   const [viewerFile, setViewerFile] = useState(null);
 
@@ -108,12 +111,7 @@ export default function FlashcardDeck({ projectId }) {
     });
   };
 
-  const loadTest = () => {
-    const loaded = loadTestFlashcards();
-    setCards(loaded);
-    upsertFlashcards(projectId, () => loaded);
-    alert(`${loaded.length} test cards loaded.`);
-  };
+  // loadTest removed per request
 
   const handleDropFiles = async (e) => {
     e.preventDefault();
@@ -124,9 +122,9 @@ export default function FlashcardDeck({ projectId }) {
       const backendFiles = await uploadsAPI.getFiles(projectId);
       const mappedFiles = backendFiles.map(f => ({ id: f.id, name: f.original_filename, size: f.size, type: f.mime_type, category: f.category || 'lecture_notes', previewUrl: uploadsAPI.rawFileUrl(f.id) }));
       setFiles(mappedFiles);
-      alert(`${dropped.length} file(s) uploaded.`);
+      // success alert removed
     } catch (e) {
-      alert('File upload failed: ' + (e.message || 'Unknown'));
+      console.warn('File upload failed', e);
     }
   };
 
@@ -203,8 +201,40 @@ export default function FlashcardDeck({ projectId }) {
             <option value="important">Only Important ⭐</option>
           </select>
         </div>
+        <div className="flex items-center gap-3">
+          <label className="text-xs text-on-muted">Generate</label>
+          <input
+            type="number"
+            min={1}
+            max={500}
+            value={generationCount}
+            onChange={e=>setGenerationCount(Math.max(1, Math.min(500, parseInt(e.target.value||'0'))))}
+            className="px-2 py-1 w-20 rounded bg-card border border-token text-on-surface"
+          />
+          <input
+            type="range"
+            min={1}
+            max={500}
+            value={generationCount}
+            onChange={e=>setGenerationCount(parseInt(e.target.value))}
+            className="w-40"
+          />
+          <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={async ()=>{
+            if (cards.length) {
+              setDraftSets(prev => [{ timestamp: Date.now(), count: cards.length, cards }, ...prev].slice(0, 10));
+            }
+            try {
+              // TODO: wire to backend generation endpoint
+              const backendCards = await flashcardsAPI.getByProject(projectId);
+              const mapped = backendCards.map(c => ({ id: c.id, front: c.question, back: c.answer, level: levelFromNumber(c.level), reviewCount: c.review_count || 0, createdAt: Date.now(), lastReviewed: null, important: !!(c.important) }));
+              setCards(mapped);
+            } catch (e) {
+              console.warn('Generate failed', e);
+            }
+          }} className="btn btn-secondary">Generieren</motion.button>
+        </div>
         <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={exportCSV} className="btn btn-secondary">📤 Export CSV</motion.button>
-        <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={loadTest} className="btn" style={{ background:'hsl(var(--accent-100))', color:'hsl(var(--on-surface))' }}>🧪 Load Test</motion.button>
+        {/* Load Test button removed */}
       </div>
 
       {/* Search, Tabs and Page size */}
@@ -309,95 +339,110 @@ export default function FlashcardDeck({ projectId }) {
         />
       )}
 
-      {/* Inline drop area to add files to project */}
-      <motion.div 
-        onDragOver={(e)=>e.preventDefault()} 
-        onDrop={handleDropFiles}
-        whileHover={{scale:1.02, borderColor:'hsl(var(--accent))'}}
-        className="mt-8 p-8 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 text-center text-sm text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/30 transition-all"
-      >
-        📎 Drop files here to add them to this project (backend)
-      </motion.div>
+      {/* Dual upload areas side-by-side in flashcard mode */}
+      <div className="mt-8 grid md:grid-cols-2 gap-4">
+        <motion.div 
+          onDragOver={(e)=>e.preventDefault()} 
+          onDrop={handleDropFiles}
+          whileHover={{scale:1.02, borderColor:'hsl(var(--accent))'}}
+          className="p-6 rounded-xl border-2 border-dashed border-cyan-500/40 text-center text-sm text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900/30"
+        >
+          📚 Drop Lecture Notes here
+        </motion.div>
+        <motion.div 
+          onDragOver={(e)=>e.preventDefault()} 
+          onDrop={async (e)=>{ e.preventDefault(); const dropped = Array.from(e.dataTransfer.files); if (!dropped.length) return; try { await uploadsAPI.upload(projectId, dropped, 'extended_info'); const backendFiles = await uploadsAPI.getFiles(projectId); const mappedFiles = backendFiles.map(f => ({ id: f.id, name: f.original_filename, size: f.size, type: f.mime_type, category: f.category || 'lecture_notes', previewUrl: uploadsAPI.rawFileUrl(f.id) })); setFiles(mappedFiles);} catch(er){ console.warn('File upload failed', er);} }}
+          whileHover={{scale:1.02, borderColor:'hsl(var(--accent))'}}
+          className="p-6 rounded-xl border-2 border-dashed border-purple-500/40 text-center text-sm text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900/30"
+        >
+          📖 Drop Extended Information here
+        </motion.div>
+      </div>
 
-      {/* Files list - Grouped by Category */}
-      <div className="mt-6 space-y-6">
+      {/* Files list - Sources side-by-side */}
+      <div className="mt-6">
         <h3 className="text-lg font-semibold" style={{ color:'hsl(var(--accent))' }}>Sources</h3>
-        
         {files.length === 0 ? (
           <div className="text-on-muted text-sm">No files added yet.</div>
         ) : (
-          <>
-            {/* Lecture Notes */}
-            {(() => {
-              const lectureNotes = files.filter(f => f.category === 'lecture_notes');
-              return lectureNotes.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-cyan-600 dark:text-cyan-400">📚 Lecture Notes</span>
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400">({lectureNotes.length})</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {lectureNotes.map(f => (
-                      <div key={f.id} className="p-4 rounded-lg bg-card border border-cyan-500/20 flex items-center justify-between">
-                        <div className="flex items-center gap-3 min-w-0">
-                          {f.type?.startsWith('image/') ? (
-                            <img src={f.previewUrl} alt="thumb" className="w-12 h-12 object-cover rounded" />
-                          ) : (
-                            <div className="w-12 h-12 rounded bg-cyan-500/10 flex items-center justify-center text-cyan-600 dark:text-cyan-400 text-xs">📄</div>
-                          )}
-                          <div className="truncate">
-                            <div className="text-sm truncate">{f.name}</div>
-                            <div className="text-xs text-on-muted">{Math.round((f.size||0)/1024)} KB</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button className="btn" style={{ background:'hsl(var(--surface-variant))' }} onClick={()=>setViewerFile(f)}>View</button>
-                        </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Lecture Notes column */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-cyan-600 dark:text-cyan-400">📚 Lecture Notes</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">({files.filter(f=>f.category==='lecture_notes').length})</span>
+              </div>
+              <div className="space-y-3">
+                {files.filter(f => f.category === 'lecture_notes').map(f => (
+                  <div key={f.id} className="p-4 rounded-lg bg-card border border-cyan-500/20 flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {f.type?.startsWith('image/') ? (
+                        <img src={f.previewUrl} alt="thumb" className="w-12 h-12 object-cover rounded" />
+                      ) : (
+                        <div className="w-12 h-12 rounded bg-cyan-500/10 flex items-center justify-center text-cyan-600 dark:text-cyan-400 text-xs">📄</div>
+                      )}
+                      <div className="truncate">
+                        <div className="text-sm truncate">{f.name}</div>
+                        <div className="text-xs text-on-muted">{Math.round((f.size||0)/1024)} KB</div>
                       </div>
-                    ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button className="btn" style={{ background:'hsl(var(--surface-variant))' }} onClick={()=>setViewerFile(f)}>View</button>
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
-
-            {/* Extended Information */}
-            {(() => {
-              const extendedInfo = files.filter(f => f.category === 'extended_info');
-              return extendedInfo.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">📖 Extended Information</span>
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400">({extendedInfo.length})</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {extendedInfo.map(f => (
-                      <div key={f.id} className="p-4 rounded-lg bg-card border border-purple-500/20 flex items-center justify-between">
-                        <div className="flex items-center gap-3 min-w-0">
-                          {f.type?.startsWith('image/') ? (
-                            <img src={f.previewUrl} alt="thumb" className="w-12 h-12 object-cover rounded" />
-                          ) : (
-                            <div className="w-12 h-12 rounded bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 text-xs">📚</div>
-                          )}
-                          <div className="truncate">
-                            <div className="text-sm truncate">{f.name}</div>
-                            <div className="text-xs text-on-muted">{Math.round((f.size||0)/1024)} KB</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button className="btn" style={{ background:'hsl(var(--surface-variant))' }} onClick={()=>setViewerFile(f)}>View</button>
-                        </div>
+                ))}
+              </div>
+            </div>
+            {/* Extended Information column */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">📖 Extended Information</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">({files.filter(f=>f.category==='extended_info').length})</span>
+              </div>
+              <div className="space-y-3">
+                {files.filter(f => f.category === 'extended_info').map(f => (
+                  <div key={f.id} className="p-4 rounded-lg bg-card border border-purple-500/20 flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {f.type?.startsWith('image/') ? (
+                        <img src={f.previewUrl} alt="thumb" className="w-12 h-12 object-cover rounded" />
+                      ) : (
+                        <div className="w-12 h-12 rounded bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 text-xs">📚</div>
+                      )}
+                      <div className="truncate">
+                        <div className="text-sm truncate">{f.name}</div>
+                        <div className="text-xs text-on-muted">{Math.round((f.size||0)/1024)} KB</div>
                       </div>
-                    ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button className="btn" style={{ background:'hsl(var(--surface-variant))' }} onClick={()=>setViewerFile(f)}>View</button>
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
-          </>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
       {viewerFile && (
         <DocumentViewer projectId={projectId} file={viewerFile} onClose={()=>setViewerFile(null)} />
+      )}
+
+      {/* Drafts panel */}
+      {draftSets.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold" style={{ color:'hsl(var(--accent))' }}>Drafts</h3>
+          <div className="space-y-2 mt-2">
+            {draftSets.map((d, i) => (
+              <div key={d.timestamp} className="flex items-center justify-between p-3 rounded border border-token bg-card">
+                <div className="text-sm text-on-surface">Set {draftSets.length - i} • {d.count} cards • {new Date(d.timestamp).toLocaleString()}</div>
+                <div className="flex gap-2">
+                  <button className="btn btn-secondary" onClick={()=>setCards(d.cards)}>Restore</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
