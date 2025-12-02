@@ -3,6 +3,8 @@ uvicorn
 sqlalchemy
 python-multipart
 pydantic
-PyMuPDF
+pdf2image
 pytesseract
 Pillow
+opencv-python
+numpy
