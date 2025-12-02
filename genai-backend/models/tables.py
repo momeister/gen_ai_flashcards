@@ -13,6 +13,8 @@ class Project(Base):
     id = Column(String, primary_key=True, default=_uuid)
     title = Column(String, index=True)
     description = Column(Text, nullable=True)
+    flashcard_scope = Column(String, default="all_slides")  # all_slides, per_set, per_slide
+    flashcard_density = Column(Integer, default=5)  # 1-10 scale
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     files = relationship("File", back_populates="project", cascade="all, delete-orphan")
@@ -25,6 +27,7 @@ class File(Base):
     stored_path = Column(String)
     mime_type = Column(String)
     size = Column(Integer)
+    category = Column(String, default="lecture_notes")  # lecture_notes or extended_info
     project_id = Column(String, ForeignKey("projects.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     project = relationship("Project", back_populates="files")

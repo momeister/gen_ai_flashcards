@@ -12,11 +12,15 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 class ProjectBase(BaseModel):
     title: str
     description: Optional[str] = None
+    flashcard_scope: Optional[str] = "all_slides"  # all_slides, per_set, per_slide
+    flashcard_density: Optional[int] = 5  # 1-10 scale
 
 class Project(ProjectBase):
     id: str
     cardCount: int = 0
     description: Optional[str] = None
+    flashcard_scope: str = "all_slides"
+    flashcard_density: int = 5
 
 class ProjectCreate(ProjectBase):
     pass
@@ -32,18 +36,37 @@ def get_projects(db: Session = Depends(get_db)):
     result = []
     for p in items:
         card_count = db.query(FlashcardORM).filter(FlashcardORM.project_id == p.id).count()
-        result.append(Project(id=p.id, title=p.title, description=p.description, cardCount=card_count))
+        result.append(Project(
+            id=p.id, 
+            title=p.title, 
+            description=p.description, 
+            cardCount=card_count,
+            flashcard_scope=p.flashcard_scope or "all_slides",
+            flashcard_density=p.flashcard_density or 5
+        ))
     return result
 
 
 @router.post("", response_model=Project)
 def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
     """Create new project"""
-    obj = ProjectORM(title=project.title, description=project.description)
+    obj = ProjectORM(
+        title=project.title, 
+        description=project.description,
+        flashcard_scope=project.flashcard_scope or "all_slides",
+        flashcard_density=project.flashcard_density or 5
+    )
     db.add(obj)
     db.commit()
     db.refresh(obj)
-    return Project(id=obj.id, title=obj.title, description=obj.description, cardCount=0)
+    return Project(
+        id=obj.id, 
+        title=obj.title, 
+        description=obj.description, 
+        cardCount=0,
+        flashcard_scope=obj.flashcard_scope,
+        flashcard_density=obj.flashcard_density
+    )
 
 
 @router.get("/{project_id}", response_model=Project)
@@ -53,7 +76,14 @@ def get_project(project_id: str, db: Session = Depends(get_db)):
     if not obj:
         raise HTTPException(status_code=404, detail="Project not found")
     card_count = db.query(FlashcardORM).filter(FlashcardORM.project_id == obj.id).count()
-    return Project(id=obj.id, title=obj.title, description=obj.description, cardCount=card_count)
+    return Project(
+        id=obj.id, 
+        title=obj.title, 
+        description=obj.description, 
+        cardCount=card_count,
+        flashcard_scope=obj.flashcard_scope or "all_slides",
+        flashcard_density=obj.flashcard_density or 5
+    )
 
 
 @router.patch("/{project_id}", response_model=Project)
@@ -67,7 +97,14 @@ def update_project(project_id: str, updates: ProjectUpdate, db: Session = Depend
     db.commit()
     db.refresh(obj)
     card_count = db.query(FlashcardORM).filter(FlashcardORM.project_id == obj.id).count()
-    return Project(id=obj.id, title=obj.title, description=obj.description, cardCount=card_count)
+    return Project(
+        id=obj.id, 
+        title=obj.title, 
+        description=obj.description, 
+        cardCount=card_count,
+        flashcard_scope=obj.flashcard_scope or "all_slides",
+        flashcard_density=obj.flashcard_density or 5
+    )
 
 
 @router.delete("/{project_id}")

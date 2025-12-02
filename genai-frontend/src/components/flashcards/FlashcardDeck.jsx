@@ -33,7 +33,7 @@ export default function FlashcardDeck({ projectId }) {
       }
       try {
         const backendFiles = await uploadsAPI.getFiles(projectId);
-        const mappedFiles = backendFiles.map(f => ({ id: f.id, name: f.original_filename, size: f.size, type: f.mime_type, previewUrl: uploadsAPI.rawFileUrl(f.id) }));
+        const mappedFiles = backendFiles.map(f => ({ id: f.id, name: f.original_filename, size: f.size, type: f.mime_type, category: f.category || 'lecture_notes', previewUrl: uploadsAPI.rawFileUrl(f.id) }));
         setFiles(mappedFiles);
       } catch (e) {
         console.warn('Files could not be loaded', e);
@@ -120,9 +120,9 @@ export default function FlashcardDeck({ projectId }) {
     const dropped = Array.from(e.dataTransfer.files);
     if (!dropped.length) return;
     try {
-      await uploadsAPI.upload(projectId, dropped);
+      await uploadsAPI.upload(projectId, dropped, 'lecture_notes');
       const backendFiles = await uploadsAPI.getFiles(projectId);
-      const mappedFiles = backendFiles.map(f => ({ id: f.id, name: f.original_filename, size: f.size, type: f.mime_type, previewUrl: uploadsAPI.rawFileUrl(f.id) }));
+      const mappedFiles = backendFiles.map(f => ({ id: f.id, name: f.original_filename, size: f.size, type: f.mime_type, category: f.category || 'lecture_notes', previewUrl: uploadsAPI.rawFileUrl(f.id) }));
       setFiles(mappedFiles);
       alert(`${dropped.length} file(s) uploaded.`);
     } catch (e) {
@@ -319,32 +319,80 @@ export default function FlashcardDeck({ projectId }) {
         📎 Drop files here to add them to this project (backend)
       </motion.div>
 
-      {/* Files list */}
-      <div className="mt-6">
-        <h3 className="text-sm font-semibold mb-2" style={{ color:'hsl(var(--accent))' }}>Files</h3>
+      {/* Files list - Grouped by Category */}
+      <div className="mt-6 space-y-6">
+        <h3 className="text-lg font-semibold" style={{ color:'hsl(var(--accent))' }}>Sources</h3>
+        
         {files.length === 0 ? (
           <div className="text-on-muted text-sm">No files added yet.</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {files.map(f => (
-              <div key={f.id} className="p-4 rounded-lg bg-card border border-token flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  {f.type?.startsWith('image/') ? (
-                    <img src={f.previewUrl} alt="thumb" className="w-12 h-12 object-cover rounded" />
-                  ) : (
-                    <div className="w-12 h-12 rounded bg-surface-variant flex items-center justify-center text-on-muted text-xs">{(f.type||'file').split('/').pop()}</div>
-                  )}
-                  <div className="truncate">
-                    <div className="text-sm truncate">{f.name}</div>
-                    <div className="text-xs text-on-muted">{Math.round((f.size||0)/1024)} KB</div>
+          <>
+            {/* Lecture Notes */}
+            {(() => {
+              const lectureNotes = files.filter(f => f.category === 'lecture_notes');
+              return lectureNotes.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-cyan-600 dark:text-cyan-400">📚 Lecture Notes</span>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">({lectureNotes.length})</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {lectureNotes.map(f => (
+                      <div key={f.id} className="p-4 rounded-lg bg-card border border-cyan-500/20 flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {f.type?.startsWith('image/') ? (
+                            <img src={f.previewUrl} alt="thumb" className="w-12 h-12 object-cover rounded" />
+                          ) : (
+                            <div className="w-12 h-12 rounded bg-cyan-500/10 flex items-center justify-center text-cyan-600 dark:text-cyan-400 text-xs">📄</div>
+                          )}
+                          <div className="truncate">
+                            <div className="text-sm truncate">{f.name}</div>
+                            <div className="text-xs text-on-muted">{Math.round((f.size||0)/1024)} KB</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button className="btn" style={{ background:'hsl(var(--surface-variant))' }} onClick={()=>setViewerFile(f)}>View</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button className="btn" style={{ background:'hsl(var(--surface-variant))' }} onClick={()=>setViewerFile(f)}>View</button>
+              );
+            })()}
+
+            {/* Extended Information */}
+            {(() => {
+              const extendedInfo = files.filter(f => f.category === 'extended_info');
+              return extendedInfo.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">📖 Extended Information</span>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">({extendedInfo.length})</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {extendedInfo.map(f => (
+                      <div key={f.id} className="p-4 rounded-lg bg-card border border-purple-500/20 flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {f.type?.startsWith('image/') ? (
+                            <img src={f.previewUrl} alt="thumb" className="w-12 h-12 object-cover rounded" />
+                          ) : (
+                            <div className="w-12 h-12 rounded bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 text-xs">📚</div>
+                          )}
+                          <div className="truncate">
+                            <div className="text-sm truncate">{f.name}</div>
+                            <div className="text-xs text-on-muted">{Math.round((f.size||0)/1024)} KB</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button className="btn" style={{ background:'hsl(var(--surface-variant))' }} onClick={()=>setViewerFile(f)}>View</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              );
+            })()}
+          </>
         )}
       </div>
 

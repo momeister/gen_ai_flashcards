@@ -7,13 +7,14 @@ export const uploadsAPI = {
    * Upload files to a project
    * @param {string} projectId - Project ID
    * @param {Array<File>} files - Array of File objects
+   * @param {string} category - 'lecture_notes' or 'extended_info'
    * @returns {Promise<Array>} Array of upload results with file metadata and processed data
    */
-  upload: async (projectId, files) => {
+  upload: async (projectId, files, category = 'lecture_notes') => {
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
     
-    const response = await fetch(`${BASE_URL}/projects/${projectId}/files`, {
+    const response = await fetch(`${BASE_URL}/projects/${projectId}/files?category=${encodeURIComponent(category)}`, {
       method: 'POST',
       body: formData,
       // Don't set Content-Type for FormData – browser sets it with boundary

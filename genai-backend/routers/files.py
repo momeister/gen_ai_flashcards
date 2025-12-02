@@ -14,8 +14,12 @@ router = APIRouter(tags=["files"])
 
 # Upload directories
 UPLOAD_DIR = "uploads"
+LECTURE_NOTES_DIR = os.path.join(UPLOAD_DIR, "lecture_notes")
+EXTENDED_INFO_DIR = os.path.join(UPLOAD_DIR, "extended_info")
 EXTRACTED_DIR = os.path.join(UPLOAD_DIR, "extracted")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(LECTURE_NOTES_DIR, exist_ok=True)
+os.makedirs(EXTENDED_INFO_DIR, exist_ok=True)
 os.makedirs(EXTRACTED_DIR, exist_ok=True)
 
 extractor = ContentExtractor()
@@ -25,24 +29,36 @@ class FileMeta(BaseModel):
     original_filename: str
     mime_type: Optional[str]
     size: int
+    category: str = "lecture_notes"  # lecture_notes or extended_info
 
 
 @router.post("/projects/{project_id}/files", response_model=List[dict])
-async def upload_files(project_id: str, files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
+async def upload_files(
+    project_id: str, 
+    files: List[UploadFile] = File(...), 
+    category: str = "lecture_notes",
+    db: Session = Depends(get_db)
+):
     """
     Upload and process files for a project
-    - Stores the file on the filesystem
+    - Stores the file on the filesystem in category-specific subdirectory
     - Extracts text with OCR (PDF/Image)
     - Stores extraction as JSON and Markdown
+    - category: 'lecture_notes' or 'extended_info'
     """
     project = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
+    # Validate and determine category directory
+    if category not in ["lecture_notes", "extended_info"]:
+        category = "lecture_notes"
+    category_dir = LECTURE_NOTES_DIR if category == "lecture_notes" else EXTENDED_INFO_DIR
+    
     results = []
     for f in files:
         safe_filename = f"{project_id}_{f.filename}"
-        file_path = os.path.join(UPLOAD_DIR, safe_filename)
+        file_path = os.path.join(category_dir, safe_filename)
         
         try:
             with open(file_path, "wb") as buffer:
@@ -54,6 +70,7 @@ async def upload_files(project_id: str, files: List[UploadFile] = File(...), db:
                 stored_path=file_path,
                 mime_type=f.content_type,
                 size=size,
+                category=category,
                 project_id=project_id
             )
             db.add(file_record)
@@ -81,7 +98,8 @@ async def upload_files(project_id: str, files: List[UploadFile] = File(...), db:
                     "id": file_record.id,
                     "original_filename": file_record.original_filename,
                     "mime_type": file_record.mime_type,
-                    "size": file_record.size
+                    "size": file_record.size,
+                    "category": file_record.category
                 },
                 "processed": processed.dict()
             })
@@ -106,7 +124,8 @@ def list_files(project_id: str, db: Session = Depends(get_db)):
             id=f.id,
             original_filename=f.original_filename,
             mime_type=f.mime_type,
-            size=f.size
+            size=f.size,
+            category=f.category or "lecture_notes"
         ) for f in files
     ]
 
