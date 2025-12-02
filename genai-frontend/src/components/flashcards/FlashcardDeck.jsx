@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import FlashcardEditor from './FlashcardEditor';
 import FlashcardStudy from './FlashcardStudy';
 // Test flashcards import removed
@@ -22,6 +22,49 @@ export default function FlashcardDeck({ projectId }) {
   const [draftSets, setDraftSets] = useState([]);
   const [files, setFiles] = useState([]);
   const [viewerFile, setViewerFile] = useState(null);
+  // Drag and drop state
+  const [draggedCard, setDraggedCard] = useState(null);
+  const [hoverTarget, setHoverTarget] = useState(null);
+  const cardRefs = useRef({});
+
+  // Global pointer tracking for swap-only dragging
+  useEffect(() => {
+    if (!draggedCard) return;
+    const handleMove = (e) => {
+      const x = e.clientX;
+      const y = e.clientY;
+      let target = null;
+      for (const [id, el] of Object.entries(cardRefs.current)) {
+        if (!el || id === String(draggedCard)) continue;
+        const rect = el.getBoundingClientRect();
+        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+          target = id;
+          break;
+        }
+      }
+      setHoverTarget(target);
+    };
+    const handleUp = () => {
+      if (hoverTarget && hoverTarget !== draggedCard) {
+        setCards(prev => {
+          const i1 = prev.findIndex(c => c.id === draggedCard);
+          const i2 = prev.findIndex(c => c.id === hoverTarget);
+          if (i1 === -1 || i2 === -1) return prev;
+          const next = [...prev];
+          [next[i1], next[i2]] = [next[i2], next[i1]];
+          return next;
+        });
+      }
+      setDraggedCard(null);
+      setHoverTarget(null);
+    };
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+    };
+  }, [draggedCard, hoverTarget, setCards]);
 
   useEffect(()=>{
     // Load flashcards from backend
@@ -52,6 +95,11 @@ export default function FlashcardDeck({ projectId }) {
     new: 'border-cyan-500',
     unsure: 'border-amber-500',
     know_it: 'border-green-500',
+  };
+  const levelGradients = {
+    new: 'from-cyan-500 via-cyan-300 to-transparent',
+    unsure: 'from-amber-500 via-amber-300 to-transparent',
+    know_it: 'from-green-500 via-green-300 to-transparent',
   };
   const levelBadgeColors = {
     new: 'border-cyan-500/40 text-cyan-600 bg-cyan-500/10',
@@ -180,58 +228,92 @@ export default function FlashcardDeck({ projectId }) {
         <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text">Flashcards</h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Create, study, export – with animated swipe.</p>
       </div>
-      <div className="flex flex-wrap gap-2 sm:gap-3 justify-center items-center">
-        <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={openNew} className="btn btn-primary">+ New Card</motion.button>
-        
-        {/* Start Studying with dropdown */}
-        <div className="flex flex-col gap-1">
-          <motion.button 
-            whileHover={{scale:1.05, y:-2}} 
-            whileTap={{scale:0.98}} 
-            onClick={()=>setOverview(false)} 
-            disabled={!studyCards.length} 
-            className="px-6 py-2 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 disabled:from-zinc-300 disabled:to-zinc-400 dark:disabled:from-zinc-700 dark:disabled:to-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-400 text-white font-semibold shadow-lg transition-all"
-          >
-            Start Studying
-          </motion.button>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-on-muted">Study Set</label>
-            <select value={studyFilter} onChange={e=>setStudyFilter(e.target.value)} className="px-2 py-1 rounded bg-card border border-token text-on-surface text-sm">
-              <option value="all">All</option>
-              <option value="new">Only New</option>
-              <option value="unsure">Only Unsure</option>
-              <option value="know_it">Only Know It</option>
-              <option value="important">Only Important ⭐</option>
-            </select>
-          </div>
-        </div>
+      {/* Button Section - Logical grouping */}
+      <div className="flex flex-wrap gap-4 justify-center items-center">
+        {/* 1. Create new card */}
+        <motion.button 
+          whileHover={{scale:1.05, y:-2}} 
+          whileTap={{scale:0.95}} 
+          onClick={openNew} 
+          className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Neue Karte
+        </motion.button>
 
-        {/* Generate Card section */}
-        <div className="flex items-center gap-2 border border-token rounded-lg px-3 py-2 bg-card">
-          <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={async ()=>{
-            if (cards.length) {
-              setDraftSets(prev => [{ timestamp: Date.now(), count: cards.length, cards }, ...prev].slice(0, 10));
-            }
-            try {
-              // TODO: wire to backend generation endpoint
-              const backendCards = await flashcardsAPI.getByProject(projectId);
-              const mapped = backendCards.map(c => ({ id: c.id, front: c.question, back: c.answer, level: levelFromNumber(c.level), reviewCount: c.review_count || 0, createdAt: Date.now(), lastReviewed: null, important: !!(c.important) }));
-              setCards(mapped);
-            } catch (e) {
-              console.warn('Generate failed', e);
-            }
-          }} className="btn btn-secondary whitespace-nowrap">Generate Card</motion.button>
+        {/* 2. Generate cards from files */}
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface-variant border-2 border-token hover:border-accent transition-colors">
+          <label className="text-sm font-medium text-on-surface">Anzahl:</label>
           <input
             type="number"
             min={1}
             max={500}
             value={generationCount}
-            onChange={e=>setGenerationCount(Math.max(1, Math.min(500, parseInt(e.target.value||'0'))))}
-            className="px-2 py-1 w-16 rounded bg-surface border border-token text-on-surface text-center"
+            onChange={e=>setGenerationCount(Math.max(1, Math.min(500, parseInt(e.target.value||'1'))))}
+            className="w-16 px-2 py-1 text-center bg-card border border-token rounded text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-accent"
           />
+          <motion.button 
+            whileHover={{scale:1.05}} 
+            whileTap={{scale:0.95}} 
+            onClick={async ()=>{
+              if (cards.length) setDraftSets(prev => [{ timestamp: Date.now(), count: cards.length, cards }, ...prev].slice(0, 10));
+              try {
+                const backendCards = await flashcardsAPI.getByProject(projectId);
+                const mapped = backendCards.map(c => ({ id: c.id, front: c.question, back: c.answer, level: levelFromNumber(c.level), reviewCount: c.review_count || 0, createdAt: Date.now(), lastReviewed: null, important: !!(c.important) }));
+                setCards(mapped);
+              } catch (e) { console.warn('Generate failed', e); }
+            }} 
+            className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Generieren
+          </motion.button>
         </div>
 
-        <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={exportCSV} className="btn btn-secondary">Export CSV</motion.button>
+        {/* 3. Study mode */}
+        <div className="flex items-center gap-2">
+          <motion.button 
+            whileHover={{scale:1.05, boxShadow:'0 10px 30px rgba(34,197,94,0.3)'}} 
+            whileTap={{scale:0.95}} 
+            onClick={()=>setOverview(false)} 
+            disabled={!studyCards.length} 
+            className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-zinc-300 disabled:to-zinc-400 dark:disabled:from-zinc-700 dark:disabled:to-zinc-800 disabled:text-zinc-500 text-white font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Lernen ({studyCards.length})
+          </motion.button>
+          <select 
+            value={studyFilter} 
+            onChange={e=>setStudyFilter(e.target.value)} 
+            className="px-4 py-2.5 rounded-lg bg-surface-variant border-2 border-token text-on-surface font-medium hover:border-accent transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent"
+          >
+            <option value="all">Alle</option>
+            <option value="new">Neu</option>
+            <option value="unsure">Unsicher</option>
+            <option value="know_it">Kann ich</option>
+            <option value="important">⭐ Wichtig</option>
+          </select>
+        </div>
+
+        {/* 4. Export */}
+        <motion.button 
+          whileHover={{scale:1.05, y:-2}} 
+          whileTap={{scale:0.95}} 
+          onClick={exportCSV} 
+          className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Export CSV
+        </motion.button>
       </div>
 
       {/* Search, Tabs and Page size */}
@@ -268,17 +350,32 @@ export default function FlashcardDeck({ projectId }) {
               const rot = (idx % 3 === 0) ? 1.5 : (idx % 3 === 1) ? -1 : 0.5;
               const cardLevelColor = levelColors[card.level] || levelColors['new'];
               const cardBadgeColor = levelBadgeColors[card.level] || levelBadgeColors['new'];
+              const cardGradient = levelGradients[card.level] || levelGradients['new'];
+              const isDragging = draggedCard === card.id;
+              const isHoverTarget = hoverTarget === String(card.id);
               return (
                 <motion.div 
+                  ref={(el) => { if (el) cardRefs.current[card.id] = el; }}
                   key={card.id} 
                   layout 
+                  onPointerDown={(e) => { e.preventDefault(); setDraggedCard(card.id); }}
                   initial={{opacity:0, y:20, rotate:rot}} 
-                  animate={{opacity:1,y:0, rotate:rot}} 
+                  animate={{
+                    opacity: isDragging ? 0.85 : 1,
+                    y: 0, 
+                    rotate: isDragging ? 0 : rot,
+                    scale: isHoverTarget ? 0.97 : 1,
+                  }} 
                   exit={{opacity:0,scale:0.8, rotate:0}}
-                  whileHover={{scale:1.05, rotate:0, y:-8, boxShadow:'0 20px 40px rgba(0,0,0,0.3)'}}
-                  className={`p-5 pb-8 rounded-lg bg-card border-8 ${cardLevelColor} shadow-xl transition-all`}
+                  whileHover={{scale:1.03, rotate:0, y:-4, boxShadow:'0 20px 40px rgba(0,0,0,0.3)'}}
+                  className={`relative p-5 pb-8 rounded-lg bg-card shadow-xl transition-all overflow-hidden select-none ${draggedCard? 'cursor-grabbing' : 'cursor-grab'} ${isHoverTarget ? 'ring-4 ring-[hsl(var(--accent))]/40' : ''}`}
                   style={{ transformStyle:'preserve-3d' }}
                 >
+                  {/* Gradient border effect */}
+                  <div className={`absolute inset-0 rounded-lg bg-gradient-to-br ${cardGradient} opacity-60`} style={{ padding: '8px', zIndex: -1 }}>
+                    <div className="w-full h-full bg-card rounded-lg" />
+                  </div>
+                  <div className={`absolute inset-0 rounded-lg border-4 ${cardLevelColor} opacity-40`} />
                   <div className="flex items-start gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex gap-2 mb-2">
