@@ -7,8 +7,9 @@ from typing import Optional
 import shutil
 import os
 from models.db import get_db
-from models.tables import Project as ProjectORM, File as FileORM
+from models.tables import Project as ProjectORM, File as FileORM, Flashcard as FlashcardORM
 from services.extractor import ContentExtractor
+from services.card_generator import CardGenerator
 
 router = APIRouter(tags=["files"])
 
@@ -19,6 +20,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(EXTRACTED_DIR, exist_ok=True)
 
 extractor = ContentExtractor()
+card_generator = CardGenerator()
 
 class FileMeta(BaseModel):
     id: str
@@ -76,6 +78,34 @@ async def upload_files(project_id: str, files: List[UploadFile] = File(...), db:
             with open(extracted_md_path, "w", encoding="utf-8") as mf:
                 mf.writelines(md_lines)
             
+            # Generate flashcards automatically
+            generated_cards = card_generator.generate_cards_from_document(
+                document=processed,
+                cards_per_chunk=3,
+                difficulty_level=0
+            )
+            
+            # Save generated cards to database
+            cards_saved = []
+            for card in generated_cards:
+                flashcard = FlashcardORM(
+                    question=card.question,
+                    answer=card.answer,
+                    level=card.level,
+                    important=0,
+                    review_count=0,
+                    project_id=project_id
+                )
+                db.add(flashcard)
+                db.commit()
+                db.refresh(flashcard)
+                cards_saved.append({
+                    "id": flashcard.id,
+                    "question": flashcard.question,
+                    "answer": flashcard.answer,
+                    "level": flashcard.level
+                })
+            
             results.append({
                 "file": {
                     "id": file_record.id,
@@ -83,7 +113,9 @@ async def upload_files(project_id: str, files: List[UploadFile] = File(...), db:
                     "mime_type": file_record.mime_type,
                     "size": file_record.size
                 },
-                "processed": processed.dict()
+                "processed": processed.dict(),
+                "generated_cards": cards_saved,
+                "cards_count": len(cards_saved)
             })
         
         except Exception as e:
