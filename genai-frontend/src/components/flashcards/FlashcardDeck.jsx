@@ -48,6 +48,16 @@ export default function FlashcardDeck({ projectId }) {
 
   const levelMap = { new: 0, unsure: 1, know_it: 2 };
   const levelFromNumber = (n) => Object.entries(levelMap).find(([,v])=>v===n)?.[0] || 'new';
+  const levelColors = {
+    new: 'border-cyan-500',
+    unsure: 'border-amber-500',
+    know_it: 'border-green-500',
+  };
+  const levelBadgeColors = {
+    new: 'border-cyan-500/40 text-cyan-600 bg-cyan-500/10',
+    unsure: 'border-amber-500/40 text-amber-600 bg-amber-500/10',
+    know_it: 'border-green-500/40 text-green-600 bg-green-500/10',
+  };
 
   const openNew = () => { setEditing(null); setEditorOpen(true); };
   const openEdit = (card) => { setEditing(card); setEditorOpen(true); };
@@ -173,52 +183,31 @@ export default function FlashcardDeck({ projectId }) {
       <div className="flex flex-wrap gap-2 sm:gap-3 justify-center items-center">
         <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={openNew} className="btn btn-primary">+ New Card</motion.button>
         
-        {/* PROMINENT Learn Button */}
-        <motion.button 
-          whileHover={{scale:1.1, y:-4, boxShadow:'0 20px 40px rgba(34,197,94,0.4)'}} 
-          whileTap={{scale:0.98}} 
-          onClick={()=>setOverview(false)} 
-          disabled={!studyCards.length} 
-          className="relative px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 disabled:from-zinc-300 disabled:to-zinc-400 dark:disabled:from-zinc-700 dark:disabled:to-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-400 text-white text-base sm:text-lg font-bold shadow-2xl transition-all overflow-hidden group"
-        >
-          <span className="relative z-10 flex items-center gap-2">
-            🎯 Start Studying
-            <span className="text-xs sm:text-sm font-normal opacity-80">({studyCards.length})</span>
-          </span>
-          <motion.div 
-            className="absolute inset-0 bg-gradient-to-r from-yellow-300/30 to-green-300/30 opacity-0 group-hover:opacity-100 transition-opacity"
-            animate={{ x: ['-100%', '200%'] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-          />
-        </motion.button>
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-on-muted">Study Set</label>
-          <select value={studyFilter} onChange={e=>setStudyFilter(e.target.value)} className="px-2 py-1 rounded bg-card border border-token text-on-surface">
-            <option value="all">All</option>
-            <option value="new">Only New</option>
-            <option value="unsure">Only Unsure</option>
-            <option value="know_it">Only Know It</option>
-            <option value="important">Only Important ⭐</option>
-          </select>
+        {/* Start Studying with dropdown */}
+        <div className="flex flex-col gap-1">
+          <motion.button 
+            whileHover={{scale:1.05, y:-2}} 
+            whileTap={{scale:0.98}} 
+            onClick={()=>setOverview(false)} 
+            disabled={!studyCards.length} 
+            className="px-6 py-2 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 disabled:from-zinc-300 disabled:to-zinc-400 dark:disabled:from-zinc-700 dark:disabled:to-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-400 text-white font-semibold shadow-lg transition-all"
+          >
+            Start Studying
+          </motion.button>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-on-muted">Study Set</label>
+            <select value={studyFilter} onChange={e=>setStudyFilter(e.target.value)} className="px-2 py-1 rounded bg-card border border-token text-on-surface text-sm">
+              <option value="all">All</option>
+              <option value="new">Only New</option>
+              <option value="unsure">Only Unsure</option>
+              <option value="know_it">Only Know It</option>
+              <option value="important">Only Important ⭐</option>
+            </select>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="text-xs text-on-muted">Generate</label>
-          <input
-            type="number"
-            min={1}
-            max={500}
-            value={generationCount}
-            onChange={e=>setGenerationCount(Math.max(1, Math.min(500, parseInt(e.target.value||'0'))))}
-            className="px-2 py-1 w-20 rounded bg-card border border-token text-on-surface"
-          />
-          <input
-            type="range"
-            min={1}
-            max={500}
-            value={generationCount}
-            onChange={e=>setGenerationCount(parseInt(e.target.value))}
-            className="w-40"
-          />
+
+        {/* Generate Card section */}
+        <div className="flex items-center gap-2 border border-token rounded-lg px-3 py-2 bg-card">
           <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={async ()=>{
             if (cards.length) {
               setDraftSets(prev => [{ timestamp: Date.now(), count: cards.length, cards }, ...prev].slice(0, 10));
@@ -231,10 +220,18 @@ export default function FlashcardDeck({ projectId }) {
             } catch (e) {
               console.warn('Generate failed', e);
             }
-          }} className="btn btn-secondary">Generieren</motion.button>
+          }} className="btn btn-secondary whitespace-nowrap">Generate Card</motion.button>
+          <input
+            type="number"
+            min={1}
+            max={500}
+            value={generationCount}
+            onChange={e=>setGenerationCount(Math.max(1, Math.min(500, parseInt(e.target.value||'0'))))}
+            className="px-2 py-1 w-16 rounded bg-surface border border-token text-on-surface text-center"
+          />
         </div>
-        <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={exportCSV} className="btn btn-secondary">📤 Export CSV</motion.button>
-        {/* Load Test button removed */}
+
+        <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={exportCSV} className="btn btn-secondary">Export CSV</motion.button>
       </div>
 
       {/* Search, Tabs and Page size */}
@@ -269,6 +266,8 @@ export default function FlashcardDeck({ projectId }) {
           <AnimatePresence>
             {paged.map((card, idx) => {
               const rot = (idx % 3 === 0) ? 1.5 : (idx % 3 === 1) ? -1 : 0.5;
+              const cardLevelColor = levelColors[card.level] || levelColors['new'];
+              const cardBadgeColor = levelBadgeColors[card.level] || levelBadgeColors['new'];
               return (
                 <motion.div 
                   key={card.id} 
@@ -277,13 +276,13 @@ export default function FlashcardDeck({ projectId }) {
                   animate={{opacity:1,y:0, rotate:rot}} 
                   exit={{opacity:0,scale:0.8, rotate:0}}
                   whileHover={{scale:1.05, rotate:0, y:-8, boxShadow:'0 20px 40px rgba(0,0,0,0.3)'}}
-                  className="p-5 pb-8 rounded-lg bg-card border-8 border-token shadow-xl transition-all"
+                  className={`p-5 pb-8 rounded-lg bg-card border-8 ${cardLevelColor} shadow-xl transition-all`}
                   style={{ transformStyle:'preserve-3d' }}
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex gap-2 mb-2">
-                        <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${card.level==='neu'?'border-cyan-500/40 text-cyan-500 bg-cyan-500/10':card.level==='nicht_sicher'?'border-yellow-500/40 text-yellow-500 bg-yellow-500/10':'border-green-500/40 text-green-500 bg-green-500/10'}`}>{card.level}</span>
+                        <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${cardBadgeColor}`}>{card.level.replace('_', ' ')}</span>
                         <span className="text-xs text-zinc-400 dark:text-zinc-500">↻ {card.reviewCount}</span>
                       </div>
                       <p className="text-sm text-on-surface whitespace-pre-wrap"><strong>Question:</strong> {card.front}</p>

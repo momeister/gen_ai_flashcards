@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const levels = {
-  neu: { label: 'Neu', color: 'bg-cyan-500/20 text-cyan-300' },
-  nicht_sicher: { label: 'Nicht sicher', color: 'bg-yellow-500/20 text-yellow-300' },
-  kann_ich: { label: 'Kann ich', color: 'bg-green-500/20 text-green-300' },
+  new: { label: 'New', color: 'bg-cyan-500/20 text-cyan-300' },
+  unsure: { label: 'Unsure', color: 'bg-amber-500/20 text-amber-300' },
+  know_it: { label: 'Know It', color: 'bg-green-500/20 text-green-300' },
 };
 
 export default function FlashcardStudy({ cards, onUpdateLevel, onExit, onEditCurrent, onDeleteCurrent }) {
@@ -19,12 +19,12 @@ export default function FlashcardStudy({ cards, onUpdateLevel, onExit, onEditCur
 
   const handleSwipeEnd = (_e, info) => {
     const { x = 0, y = 0 } = info.offset || {};
-    if (x < -120) { // links => neu
-      rate('neu');
-    } else if (x > 120) { // rechts => kann_ich
-      rate('kann_ich');
-    } else if (y > 120) { // unten => nicht_sicher
-      rate('nicht_sicher');
+    if (x < -120) { // links => new
+      rate('new');
+    } else if (x > 120) { // rechts => know_it
+      rate('know_it');
+    } else if (y > 120) { // unten => unsure
+      rate('unsure');
     }
   };
 
@@ -61,9 +61,9 @@ export default function FlashcardStudy({ cards, onUpdateLevel, onExit, onEditCur
       if (tag === 'textarea' || tag === 'input' || e.target?.isContentEditable) return;
       if (!card) return;
       const key = e.key.toLowerCase();
-      if (['arrowleft','a'].includes(key)) { e.preventDefault(); rate('neu'); }
-      else if (['arrowdown','s'].includes(key)) { e.preventDefault(); rate('nicht_sicher'); }
-      else if (['arrowright','d'].includes(key)) { e.preventDefault(); rate('kann_ich'); }
+      if (['arrowleft','a'].includes(key)) { e.preventDefault(); rate('new'); }
+      else if (['arrowdown','s'].includes(key)) { e.preventDefault(); rate('unsure'); }
+      else if (['arrowright','d'].includes(key)) { e.preventDefault(); rate('know_it'); }
       else if (key === 'w') { e.preventDefault(); handleEdit(); }
       else if (key === ' ' || key === 'spacebar') { e.preventDefault(); setFlipped(f=>!f); }
       else if (key === 'backspace') { e.preventDefault(); goBack(); }
@@ -177,9 +177,9 @@ export default function FlashcardStudy({ cards, onUpdateLevel, onExit, onEditCur
 
       {/* Rating buttons - mobile responsive */}
       <div className="mt-6 sm:mt-8 flex flex-wrap gap-2 sm:gap-4 justify-center">
-        <motion.button whileHover={{scale:1.1, y:-3}} whileTap={{scale:0.95}} onClick={()=>rate('neu')} className="btn" style={{ background:'hsl(var(--secondary))', color:'hsl(var(--on-secondary))' }}>← Neu</motion.button>
-        <motion.button whileHover={{scale:1.1, y:-3}} whileTap={{scale:0.95}} onClick={()=>rate('nicht_sicher')} className="btn" style={{ background:'hsl(var(--warning))', color:'#fff' }}>↓ Mal gehört</motion.button>
-        <motion.button whileHover={{scale:1.1, y:-3}} whileTap={{scale:0.95}} onClick={()=>rate('kann_ich')} className="btn" style={{ background:'hsl(var(--success))', color:'#fff' }}>→ Sicher</motion.button>
+        <motion.button whileHover={{scale:1.1, y:-3}} whileTap={{scale:0.95}} onClick={()=>rate('new')} className="btn" style={{ background:'hsl(var(--secondary))', color:'hsl(var(--on-secondary))' }}>← New</motion.button>
+        <motion.button whileHover={{scale:1.1, y:-3}} whileTap={{scale:0.95}} onClick={()=>rate('unsure')} className="btn" style={{ background:'hsl(var(--warning))', color:'#fff' }}>↓ Unsure</motion.button>
+        <motion.button whileHover={{scale:1.1, y:-3}} whileTap={{scale:0.95}} onClick={()=>rate('know_it')} className="btn" style={{ background:'hsl(var(--success))', color:'#fff' }}>→ Know It</motion.button>
       </div>
 
       {/* Progress color map */}
@@ -187,9 +187,9 @@ export default function FlashcardStudy({ cards, onUpdateLevel, onExit, onEditCur
         <div className="grid" style={{ gridTemplateColumns: `repeat(${cards.length}, minmax(0,1fr))`, gap:'2px' }}>
           {progress.map((p,i) => {
             let bg = 'hsl(var(--surface-variant))';
-            if (p.level === 'neu') bg = 'rgba(6,182,212,0.6)';
-            if (p.level === 'nicht_sicher') bg = 'rgba(234,179,8,0.7)';
-            if (p.level === 'kann_ich') bg = 'rgba(34,197,94,0.7)';
+            if (p.level === 'new') bg = 'rgba(6,182,212,0.6)';
+            if (p.level === 'unsure') bg = 'rgba(234,179,8,0.7)';
+            if (p.level === 'know_it') bg = 'rgba(34,197,94,0.7)';
             const isCurrent = i === index;
             return (
               <div key={p.id} title={`${i+1}. ${p.level||'Offen'}`}
@@ -201,8 +201,8 @@ export default function FlashcardStudy({ cards, onUpdateLevel, onExit, onEditCur
           })}
         </div>
         <div className="flex justify-between text-xs text-on-muted">
-          <span>Farbcodierung: Neu = Cyan, Nicht sicher = Gelb, Kann ich = Grün</span>
-          <span>Space: Flip • Backspace: Zurück</span>
+          <span>Color coding: New = Cyan, Unsure = Yellow, Know It = Green</span>
+          <span>Space: Flip • Backspace: Back</span>
         </div>
       </div>
     </div>
