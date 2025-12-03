@@ -1,7 +1,8 @@
-import fitz  # PyMuPDF
 import pytesseract
 from PIL import Image
-import io
+from pdf2image import convert_from_path
+import cv2
+import numpy as np
 from models.schemas import ProcessedDocument, TextChunk
 
 class ContentExtractor:
@@ -17,20 +18,20 @@ class ContentExtractor:
             raise ValueError(f"Unsupported file type: {ext}")
         
     def _extract_pdf(self, file_path: str, filename: str) -> ProcessedDocument:
-        doc = fitz.open(file_path)
+        # Convert PDF pages to images
+        pages = convert_from_path(file_path, 300)
         chunks = []
 
-        for page_num, page in enumerate(doc):
-            # trying to extract text directly
-            text = page.get_text()
-
-            # If no text found, use OCR
-            if not text.strip():
-                # Render page to an image
-                pix = page.get_pixmap()
-                img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-                text = pytesseract.image_to_string(img) #lang='deu+eng'
-
+        for page_num, page in enumerate(pages):
+            # Convert PIL Image to numpy array for cv2 processing
+            image = cv2.cvtColor(np.array(page), cv2.COLOR_RGB2GRAY)
+            
+            # Apply thresholding for better OCR results
+            _, image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
+            
+            # Perform OCR with PSM 6 (assume a single uniform block of text)
+            text = pytesseract.image_to_string(image, config='--oem 3 --psm 6')
+            
             if text.strip():
                 chunks.append(TextChunk(
                     text=text.strip(),
@@ -41,15 +42,24 @@ class ContentExtractor:
 
         return ProcessedDocument(
             filename=filename,
-            total_pages=len(doc),
+            total_pages=len(pages),
             chunks=chunks
         )
     
     def _extract_image(self, file_path: str, filename: str) -> ProcessedDocument:
         # Open image and perform OCR
         try:
-            image = Image.open(file_path)
-            text = pytesseract.image_to_string(image) #lang='deu+eng'
+            # Load image with PIL
+            pil_image = Image.open(file_path)
+            
+            # Convert to numpy array and grayscale for cv2 processing
+            image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2GRAY)
+            
+            # Apply thresholding for better OCR results
+            _, image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
+            
+            # Perform OCR with PSM 6 (assume a single uniform block of text)
+            text = pytesseract.image_to_string(image, config='--oem 3 --psm 6')
 
             chunks = [TextChunk(
                 text=text.strip(),

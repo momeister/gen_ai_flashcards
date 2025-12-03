@@ -1,10 +1,18 @@
 import fitz  # PyMuPDF
-import pytesseract
+import easyocr
+import numpy as np
 from PIL import Image
-import io
 from models.schemas import ProcessedDocument, TextChunk
 
 class ContentExtractor:
+    def __init__(self, languages=['de', 'en'], use_gpu=True):
+        """
+        Initialize the EasyOCR Reader once when the class is instantiated.
+        Loading the model into memory takes time, so we don't want to do it per page.
+        """
+        # 'de' for German, 'en' for English. Set gpu=False if you don't have CUDA.
+        self.reader = easyocr.Reader(languages, gpu=use_gpu)
+
     def process_file(self, file_path: str, filename: str) -> ProcessedDocument:
         """Depends on file type, process the file and extract text chunks."""
         ext = filename.split('.')[-1].lower()
@@ -21,15 +29,24 @@ class ContentExtractor:
         chunks = []
 
         for page_num, page in enumerate(doc):
-            # trying to extract text directly
+            # 1. Try to extract embedded text directly (fastest, best for standard PDFs)
             text = page.get_text()
 
-            # If no text found, use OCR
+            # 2. If no text found (scanned doc) or very little text, use EasyOCR
             if not text.strip():
                 # Render page to an image
-                pix = page.get_pixmap()
-                img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-                text = pytesseract.image_to_string(img) #lang='deu+eng'
+                # matrix=fitz.Matrix(2, 2) doubles resolution (300 DPI approx) for better OCR accuracy
+                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+                
+                # Convert PyMuPDF pixmap to a NumPy array (OpenCV format) required by EasyOCR
+                # This is more efficient than converting to PIL first
+                img_np = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, 3)
+                
+                # Perform OCR
+                # detail=0 returns a list of strings
+                # paragraph=True combines lines into logical blocks (great for notes)
+                result_list = self.reader.readtext(img_np, detail=0, paragraph=True)
+                text = " ".join(result_list)
 
             if text.strip():
                 chunks.append(TextChunk(
@@ -48,8 +65,10 @@ class ContentExtractor:
     def _extract_image(self, file_path: str, filename: str) -> ProcessedDocument:
         # Open image and perform OCR
         try:
-            image = Image.open(file_path)
-            text = pytesseract.image_to_string(image) #lang='deu+eng'
+            # EasyOCR can read directly from a file path
+            # paragraph=True helps group the handwritten text naturally
+            result_list = self.reader.readtext(file_path, detail=0, paragraph=True)
+            text = " ".join(result_list)
 
             chunks = [TextChunk(
                 text=text.strip(),
