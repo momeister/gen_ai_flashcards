@@ -5,7 +5,7 @@ from PIL import Image
 from models.schemas import ProcessedDocument, TextChunk
 
 class ContentExtractor:
-    def __init__(self, languages=['de', 'en'], use_gpu=True):
+    def __init__(self, languages=['de', 'en'], use_gpu=False):
         """
         Initialize the EasyOCR Reader once when the class is instantiated.
         Loading the model into memory takes time, so we don't want to do it per page.
