@@ -1,4 +1,4 @@
-# Genau Backend
+# Genai Backend
 
 FastAPI backend with SQLite persistence for projects, files, and flashcards.
 
@@ -18,7 +18,7 @@ FastAPI backend with SQLite persistence for projects, files, and flashcards.
 
 ## Install
 ```bash
-cd genau-backend
+cd genai-backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
