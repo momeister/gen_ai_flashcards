@@ -160,6 +160,16 @@ Requirements:
 - Questions should test understanding of the material
 - Ensure variety in question types
 - Return only valid JSON, no additional text
+- You MUST generate all output in the SAME language as the majority of the input slide text.
+- CRITICAL: Do NOT translate, switch language, or mix languages.
+- If the slide does not contain enough explicit information to answer a precise flashcard, DO NOT generate a flashcard.
+- Do NOT write vague answers such as “the text does not provide details”.
+- Don't ask questions about the date of  publication, or author names.
+- In the answers, you MUST NOT write meta-statements such as:
+  "the text does not provide details"
+  "no specific information is given"
+  "probably", "likely", "appears to be"
+
 
 JSON Output:"""
         
