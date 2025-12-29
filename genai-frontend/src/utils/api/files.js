@@ -7,11 +7,11 @@ export const uploadsAPI = {
    * Upload files to a project
    * @param {string} projectId - Project ID
    * @param {Array<File>} files - Array of File objects
-   * @param {Object} options - Upload options { provider, openaiApiKey, category }
+   * @param {Object} options - Upload options { provider, openaiApiKey, category, lmstudioUrl }
    * @returns {Promise<Array>} Array of upload results with file metadata and processed data
    */
   upload: async (projectId, files, options = {}) => {
-    const { provider = 'lmstudio', openaiApiKey = '', category = 'lecture_notes' } = options;
+    const { provider = 'lmstudio', openaiApiKey = '', category = 'lecture_notes', lmstudioUrl = 'http://127.0.0.1:1234/v1' } = options;
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
     
@@ -19,6 +19,9 @@ export const uploadsAPI = {
     const queryParams = new URLSearchParams();
     queryParams.append('provider', provider);
     queryParams.append('category', category);
+    if (provider === 'lmstudio' && lmstudioUrl) {
+      queryParams.append('lmstudio_url', lmstudioUrl);
+    }
     if (provider === 'openai' && openaiApiKey) {
       queryParams.append('openai_api_key', openaiApiKey);
     }

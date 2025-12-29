@@ -19,6 +19,7 @@ export default function UploadZone({ onCreated }) {
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [flashcardScope, setFlashcardScope] = useState('all_slides');
   const [flashcardDensity, setFlashcardDensity] = useState(5);
+  const [lmstudioUrl, setLmstudioUrl] = useState('http://127.0.0.1:1234/v1');
 
   const validate = (file) => {
     if (file.type.startsWith('video/')) return 'Videos are not allowed';
@@ -109,8 +110,9 @@ export default function UploadZone({ onCreated }) {
     try {
       const pid = await ensureServerProject();
       const uploads = [];
-      if (lectureFiles.length) uploads.push(uploadsAPI.upload(pid, lectureFiles, { provider, openaiApiKey, category: 'lecture_notes' }));
-      if (extendedFiles.length) uploads.push(uploadsAPI.upload(pid, extendedFiles, { provider, openaiApiKey, category: 'extended_info' }));
+      const uploadOptions = { provider, openaiApiKey, lmstudioUrl };
+      if (lectureFiles.length) uploads.push(uploadsAPI.upload(pid, lectureFiles, { ...uploadOptions, category: 'lecture_notes' }));
+      if (extendedFiles.length) uploads.push(uploadsAPI.upload(pid, extendedFiles, { ...uploadOptions, category: 'extended_info' }));
       console.log('📤 Upload started', { projectId: pid, lecture: lectureFiles.length, extended: extendedFiles.length, provider });
       const resultSets = await Promise.all(uploads);
       const allResults = resultSets.flat();
@@ -233,7 +235,16 @@ export default function UploadZone({ onCreated }) {
         )}
 
         {provider === 'lmstudio' && (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 pt-2">Make sure LMStudio is running on http://172.28.112.1:1234</p>
+          <div className="space-y-2 pt-2">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Specify your LMStudio base URL (default: http://127.0.0.1:1234/v1)</p>
+            <input
+              type="text"
+              value={lmstudioUrl}
+              onChange={(e) => setLmstudioUrl(e.target.value)}
+              placeholder="http://127.0.0.1:1234/v1"
+              className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500"
+            />
+          </div>
         )}
       </div>
 
