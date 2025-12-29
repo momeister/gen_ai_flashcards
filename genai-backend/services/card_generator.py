@@ -1,10 +1,15 @@
 import json
+from turtle import mode
 import requests
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Any
 from enum import Enum
 from models.schemas import ProcessedDocument, TextChunk
 from pydantic import BaseModel
 
+
+class PlannedConcept(BaseModel):
+    concept: str
+    estimated_cards: int = 1
 
 class GeneratedFlashcard(BaseModel):
     question: str
@@ -82,11 +87,21 @@ class CardGenerator:
         
         return all_cards
     
+    
+    def _call_llm(self, prompt: str, max_tokens: int = 2000) -> str:
+        """Route to the configured provider (LMStudio or OpenAI)."""
+        if self.provider == LLMProvider.LMSTUDIO:
+            return self._call_lmstudio(prompt, max_tokens)
+        return self._call_openai(prompt, max_tokens)
+    
+    
     def generate_cards_from_text(
         self,
         text: str,
         num_cards: int = 3,
-        difficulty_level: int = 0
+        difficulty_level: int = 0,
+        mode: Literal["direct", "two_step"] = "direct",
+        max_concepts: int = 6,
     ) -> List[GeneratedFlashcard]:
         """
         Generate flashcards from a single text string.
@@ -95,6 +110,9 @@ class CardGenerator:
             text: The text content to create flashcards from
             num_cards: Number of flashcards to generate
             difficulty_level: Difficulty level (0=easy, 1=medium, 2=hard, 3=expert)
+            mode: "direct" (legacy, uses num_cards) or "two_step" (uses concepts)
+            max_concepts: When mode="two_step" and no concepts provided, plan up to this many per slide
+
         
         Returns:
             List of GeneratedFlashcard objects
@@ -102,25 +120,160 @@ class CardGenerator:
         if not text or not text.strip():
             return []
         
-        # Create the prompt for LMStudio
-        prompt = self._create_generation_prompt(text, num_cards, difficulty_level)
         
+        if mode == "direct":
+            # Create the prompt for LMStudio
+            prompt = self._create_generation_prompt(text, num_cards, difficulty_level)
+            try:
+                response = self._call_llm(prompt)
+                cards = self._parse_cards_response(response)
+                
+                # Set difficulty level
+
+                for card in cards:
+                    card.level = difficulty_level
+                return cards
+            except Exception as e:
+                print(f"Error generating cards (direct): {e}")
+                return []
+
+        elif mode == "two_step":
+            try:
+                planned = self.plan_concepts(text=text, max_concepts=max_concepts)
+                concepts = planned
+                prompt = self._create_concept_cards_prompt(text, concepts, difficulty_level)
+                response = self._call_llm(prompt)
+                cards = self._parse_cards_response(response)
+                for card in cards:
+                    card.level = difficulty_level
+                return cards
+            except Exception as e:
+                print(f"Error generating cards (two_step): {e}")
+                return []
+
+    def plan_concepts(self, text: str, max_concepts: int = 6) -> List[PlannedConcept]:
+        """
+        Plan 0–6 concepts worth turning into flashcards (step 1).
+        """
+        
+        planning_prompt = f"""You are a planner for flashcards.
+Identify up to {max_concepts} key concepts from the slide text and estimate the number of flashcards needed for each concept.
+Return ONLY JSON:
+{{
+  "concepts": [
+    {{"concept": "...", "estimated_cards": "...}}
+  ]
+}}
+
+Slide text:
+{text}
+
+JSON:"""
+
+        resp = self._call_llm(planning_prompt)
         try:
-            if self.provider == LLMProvider.LMSTUDIO:
-                response = self._call_lmstudio(prompt)
-            else:  # OPENAI
-                response = self._call_openai(prompt)
-            
-            cards = self._parse_response(response)
-            
-            # Set difficulty level
-            for card in cards:
-                card.level = difficulty_level
-            
+            data = self._extract_json(resp)
+            concepts = []
+            for c in data.get("concepts", []):
+                concepts.append(
+                    PlannedConcept(
+                        concept=c.get("concept", "").strip(),
+                        estimated_cards=int(c.get("estimated_cards", 1)),
+                    )
+                )
+            return concepts
+        except Exception as e:
+            print(f"Error parsing planning response: {e}")
+            print(f"Response: {resp}")
+            return []
+
+
+
+
+    def _create_concept_cards_prompt(
+        self,
+        text: str,
+        concepts: List[PlannedConcept],
+        difficulty_level: int,
+    ) -> str:
+        """
+        Create a prompt that makes exactly one card per provided concept.
+        """
+        difficulty_descriptions = {
+            0: "easy (basic facts and definitions)",
+            1: "medium (conceptual understanding)",
+            2: "hard (application and analysis)",
+            3: "expert (synthesis and evaluation)"
+        }
+        difficulty = difficulty_descriptions.get(difficulty_level, "medium")
+
+        concepts_json = json.dumps([c.model_dump() for c in concepts], ensure_ascii=False, indent=2)
+        return f"""You are an expert at creating educational flashcards.
+Create EXACTLY one flashcard per concept below, using the slide text for correctness and context.
+
+Difficulty: {difficulty}
+Slide text:
+{text}
+
+Concepts to cover, with their number of estimated necessary cards:
+{concepts_json}
+
+Requirements:
+- Each question should be clear and concise
+- Each answer should be informative but not too long (1-3 sentences)
+- Questions should test understanding of the material
+- Ensure variety in question types
+- Return only valid JSON, no additional text
+- You MUST generate all output in the SAME language as the majority of the input slide text.
+- CRITICAL: Do NOT translate, switch language, or mix languages.
+- If the slide does not contain enough explicit information to answer a precise flashcard, DO NOT generate a flashcard.
+- Do NOT write vague answers such as “the text does not provide details”.
+- Don't ask questions about the date of  publication, or author names.
+- In the answers, you MUST NOT write meta-statements such as:
+  "the text does not provide details"
+  "no specific information is given"
+  "probably", "likely", "appears to be"
+
+Return ONLY valid JSON:
+{{
+  "flashcards": [
+    {{"question": "...", "answer": "..."}},
+    ...
+  ]
+}}
+
+JSON:"""
+
+    def _parse_cards_response(self, response: str) -> List[GeneratedFlashcard]:
+        """
+        Parse a JSON response with shape {"flashcards": [{question, answer}, ...]}.
+        """
+        cards = []
+        try:
+            data = self._extract_json(response)
+            for card_data in data.get("flashcards", []):
+                if "question" in card_data and "answer" in card_data:
+                    cards.append(
+                        GeneratedFlashcard(
+                            question=card_data["question"].strip(),
+                            answer=card_data["answer"].strip()
+                        )
+                    )
             return cards
         except Exception as e:
-            print(f"Error generating cards from text: {e}")
+            print(f"Error parsing response: {e}")
+            print(f"Response: {response}")
             return []
+    
+    def _extract_json(self, response: str) -> Any:
+        """
+        Extract the first JSON object in a string.
+        """
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start == -1 or json_end == 0:
+            raise ValueError("No JSON found in response")
+        return json.loads(response[json_start:json_end])
     
     def _create_generation_prompt(
         self,
