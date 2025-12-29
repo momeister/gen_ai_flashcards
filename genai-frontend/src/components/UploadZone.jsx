@@ -17,6 +17,8 @@ export default function UploadZone({ onCreated }) {
   const [provider, setProvider] = useState('lmstudio');
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [flashcardScope, setFlashcardScope] = useState('all_slides');
+  const [flashcardDensity, setFlashcardDensity] = useState(5);
 
   const validate = (file) => {
     if (file.type.startsWith('video/')) return 'Videos are not allowed';
@@ -106,12 +108,17 @@ export default function UploadZone({ onCreated }) {
     setUploading(true);
     try {
       const pid = await ensureServerProject();
-      console.log('📤 Upload started', { projectId: pid, files: files.length, provider });
-      const result = await uploadsAPI.upload(pid, files, { provider, openaiApiKey });
-      console.log('✅ Upload finished', result);
-      const summary = Array.isArray(result) ? result.map(r=>`${r.file.original_filename}: ${r.cards_count || 0} cards`).join('\n') : 'n/a';
-      alert(`✅ ${files.length} file(s) uploaded & processed.\n\n${summary}`);
-      setFiles([]);
+      const uploads = [];
+      if (lectureFiles.length) uploads.push(uploadsAPI.upload(pid, lectureFiles, { provider, openaiApiKey, category: 'lecture_notes' }));
+      if (extendedFiles.length) uploads.push(uploadsAPI.upload(pid, extendedFiles, { provider, openaiApiKey, category: 'extended_info' }));
+      console.log('📤 Upload started', { projectId: pid, lecture: lectureFiles.length, extended: extendedFiles.length, provider });
+      const resultSets = await Promise.all(uploads);
+      const allResults = resultSets.flat();
+      console.log('✅ Upload finished', allResults);
+      const summary = Array.isArray(allResults) ? allResults.map(r=>`${r.file.original_filename}: ${r.cards_count || 0} cards`).join('\n') : 'n/a';
+      alert(`✅ ${totalFiles} file(s) uploaded & processed.\n\n${summary}`);
+      setLectureFiles([]);
+      setExtendedFiles([]);
       setErrorMessages([]);
       if (onCreated) onCreated(pid);
     } catch (e) {
@@ -228,6 +235,33 @@ export default function UploadZone({ onCreated }) {
         {provider === 'lmstudio' && (
           <p className="text-xs text-zinc-500 dark:text-zinc-400 pt-2">Make sure LMStudio is running on http://172.28.112.1:1234</p>
         )}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4 p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700">
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">Flashcard Scope</label>
+          <select
+            value={flashcardScope}
+            onChange={e=>setFlashcardScope(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 text-zinc-900 dark:text-zinc-100"
+          >
+            {scopeOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label} — {opt.description}</option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">Flashcard Density (1-10)</label>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={flashcardDensity}
+            onChange={e=>setFlashcardDensity(Number(e.target.value))}
+            className="w-full accent-cyan-500"
+          />
+          <div className="text-xs text-zinc-500 dark:text-zinc-400">Current: {flashcardDensity}</div>
+        </div>
       </div>
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 text-transparent bg-clip-text">Upload Files</h2>
