@@ -42,6 +42,8 @@ async def upload_files(
     project_id: str,
     files: List[UploadFile] = File(...),
     provider: str = "lmstudio",
+    category: str = "lecture_notes",
+    lmstudio_url: Optional[str] = None,
     openai_api_key: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
@@ -55,10 +57,18 @@ async def upload_files(
     Query parameters:
     - provider: "lmstudio" (default) or "openai"
     - openai_api_key: Required if provider is "openai"
+    - category: "lecture_notes" (default) or "extended_info"
+    - lmstudio_url: Optional override for LMStudio base URL (default: http://127.0.0.1:1234/v1)
     """
     project = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    category = category or "lecture_notes"
+    if category not in ("lecture_notes", "extended_info"):
+        raise HTTPException(status_code=400, detail="Invalid category")
+    category_dir = LECTURE_NOTES_DIR if category == "lecture_notes" else EXTENDED_INFO_DIR
+    lmstudio_url = lmstudio_url or "http://127.0.0.1:1234/v1"
     
     # Initialize CardGenerator with selected provider
     try:
@@ -70,7 +80,7 @@ async def upload_files(
                 )
             generator = CardGenerator(provider="openai", openai_api_key=openai_api_key)
         else:
-            generator = CardGenerator(provider="lmstudio")
+            generator = CardGenerator(provider="lmstudio", lmstudio_url=lmstudio_url)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
