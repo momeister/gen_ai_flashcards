@@ -8,8 +8,13 @@ from pydantic import BaseModel
 
 
 class PlannedConcept(BaseModel):
+    id: str
     concept: str
-    estimated_cards: int = 1
+    question: str
+    evidence: str
+    confidence: float
+    should_generate: bool
+
 
 class GeneratedFlashcard(BaseModel):
     question: str
@@ -100,7 +105,7 @@ class CardGenerator:
         text: str,
         num_cards: int = 3,
         difficulty_level: int = 0,
-        mode: Literal["direct", "two_step"] = "direct",
+        mode: Literal["direct", "two_step"] = "two_step",
         max_concepts: int = 6,
     ) -> List[GeneratedFlashcard]:
         """
@@ -151,54 +156,98 @@ class CardGenerator:
                 print(f"Error generating cards (two_step): {e}")
                 return []
 
+
     def plan_concepts(self, text: str, max_concepts: int = 6) -> List[PlannedConcept]:
         """
-        Plan 0–6 concepts worth turning into flashcards (step 1).
+        Step 1 — Plan flashcard concepts with evidence and confidence.
         """
-        
-        planning_prompt = f"""You are a planner for flashcards.
-Identify up to {max_concepts} key concepts from the slide text and estimate the number of flashcards needed for each concept.
-Return ONLY JSON:
+        planning_prompt = f"""
+You are a flashcard planner.
+
+Task: select up to {max_concepts} flashcard concepts from the slide text.
+
+Only select a concept if the slide contains enough explicit information
+to answer a factual question WITHOUT meta-statements.
+
+For each concept, provide:
+- id (short unique string)
+- concept (short label)
+- question (candidate flashcard question)
+- evidence (exact words from the slide, 5–25 words)
+- confidence (float between 0.0 and 1.0)
+- should_generate (true or false)
+
+STRICT RULES:
+- Use ONLY the slide text (no external knowledge).
+- No speculation.
+- If a concept is only mentioned (name/title without explanation),
+  set should_generate=false.
+- Keep the output language the same as the slide language.
+
+Reject (should_generate=false) if the content is:
+- personal opinion/interview ("I", "me", "my", "m’", "je")
+- unclear/vague ("this role", "that", "the person at the time")
+- only a name/title without explanation
+- a question about the name or the date of publication.
+
+Return ONLY valid JSON in this shape:
 {{
   "concepts": [
-    {{"concept": "...", "estimated_cards": "...}}
+    {{
+      "id": "c1",
+      "concept": "...",
+      "question": "...",
+      "evidence": "...",
+      "confidence": 0.0,
+      "should_generate": true
+    }}
   ]
 }}
 
 Slide text:
 {text}
 
-JSON:"""
+JSON:
+"""
 
         resp = self._call_llm(planning_prompt)
+
         try:
             data = self._extract_json(resp)
-            concepts = []
+            concepts: List[PlannedConcept] = []
+
             for c in data.get("concepts", []):
-                concepts.append(
-                    PlannedConcept(
-                        concept=c.get("concept", "").strip(),
-                        estimated_cards=int(c.get("estimated_cards", 1)),
+                try:
+                    pc = PlannedConcept(
+                        id=c["id"],
+                        concept=c["concept"].strip(),
+                        question=c["question"].strip(),
+                        evidence=c["evidence"].strip(),
+                        confidence=float(c.get("confidence", 0.0)),
+                        should_generate=bool(c.get("should_generate", False)),
                     )
-                )
+
+                    # 🔒 HARD FILTER
+                    if pc.should_generate and pc.confidence >= 0.6:
+                        concepts.append(pc)
+
+                except Exception:
+                    continue
+
             return concepts
+
         except Exception as e:
             print(f"Error parsing planning response: {e}")
             print(f"Response: {resp}")
             return []
 
 
-
-
     def _create_concept_cards_prompt(
-        self,
-        text: str,
-        concepts: List[PlannedConcept],
-        difficulty_level: int,
-    ) -> str:
-        """
-        Create a prompt that makes exactly one card per provided concept.
-        """
+    self,
+    text: str,
+    concepts: List[PlannedConcept],
+    difficulty_level: int,
+) -> str:
         difficulty_descriptions = {
             0: "easy (basic facts and definitions)",
             1: "medium (conceptual understanding)",
@@ -207,63 +256,71 @@ JSON:"""
         }
         difficulty = difficulty_descriptions.get(difficulty_level, "medium")
 
-        concepts_json = json.dumps([c.model_dump() for c in concepts], ensure_ascii=False, indent=2)
-        return f"""You are an expert at creating educational flashcards.
-Create EXACTLY one flashcard per concept below, using the slide text for correctness and context.
+        concepts_json = json.dumps(
+            [c.model_dump() for c in concepts],
+            ensure_ascii=False,
+            indent=2
+        )
+
+        return f"""
+You are an expert educational flashcard writer.
+
+Use ONLY the slide text for correctness.
+Write in the SAME language as the slide text.
+
+For each concept, output exactly ONE result object:
+- status = "ok" with a question and answer
+- OR status = "skipped" with reason = "insufficient_evidence"
+
+Never write meta-statements such as:
+- "the text does not provide details"
+- "no information is given"
+- "probably", "likely", "appears to be"
 
 Difficulty: {difficulty}
-Slide text:
-{text}
 
-Concepts to cover, with their number of estimated necessary cards:
-{concepts_json}
-
-Requirements:
-- Each question should be clear and concise
-- Each answer should be informative but not too long (1-3 sentences)
-- Questions should test understanding of the material
-- Ensure variety in question types
-- Return only valid JSON, no additional text
-- You MUST generate all output in the SAME language as the majority of the input slide text.
-- CRITICAL: Do NOT translate, switch language, or mix languages.
-- If the slide does not contain enough explicit information to answer a precise flashcard, DO NOT generate a flashcard.
-- Do NOT write vague answers such as “the text does not provide details”.
-- Don't ask questions about the date of  publication, or author names.
-- In the answers, you MUST NOT write meta-statements such as:
-  "the text does not provide details"
-  "no specific information is given"
-  "probably", "likely", "appears to be"
-
-Return ONLY valid JSON:
+Return ONLY valid JSON in this exact shape:
 {{
-  "flashcards": [
-    {{"question": "...", "answer": "..."}},
-    ...
+  "results": [
+    {{
+      "concept_id": "...",
+      "status": "ok",
+      "question": "...",
+      "answer": "..."
+    }},
+    {{
+      "concept_id": "...",
+      "status": "skipped",
+      "reason": "insufficient_evidence"
+    }}
   ]
 }}
 
-JSON:"""
+Slide text:
+{text}
+
+Concepts:
+{concepts_json}
+
+JSON:
+"""
 
     def _parse_cards_response(self, response: str) -> List[GeneratedFlashcard]:
-        """
-        Parse a JSON response with shape {"flashcards": [{question, answer}, ...]}.
-        """
-        cards = []
         try:
             data = self._extract_json(response)
-            for card_data in data.get("flashcards", []):
-                if "question" in card_data and "answer" in card_data:
-                    cards.append(
-                        GeneratedFlashcard(
-                            question=card_data["question"].strip(),
-                            answer=card_data["answer"].strip()
-                        )
-                    )
+            cards: List[GeneratedFlashcard] = []
+            for r in data.get("results", []):
+                if r.get("status") == "ok":
+                    q = str(r.get("question", "")).strip()
+                    a = str(r.get("answer", "")).strip()
+                    if q and a:
+                        cards.append(GeneratedFlashcard(question=q, answer=a))
             return cards
         except Exception as e:
             print(f"Error parsing response: {e}")
             print(f"Response: {response}")
             return []
+
     
     def _extract_json(self, response: str) -> Any:
         """
@@ -350,7 +407,7 @@ JSON Output:"""
                     "content": prompt
                 }
             ],
-            "temperature": 0.7,
+            "temperature": 0.3,
             "max_tokens": max_tokens,
             "stream": False
         }
