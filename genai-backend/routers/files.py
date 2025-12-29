@@ -7,8 +7,9 @@ from typing import Optional
 import shutil
 import os
 from models.db import get_db
-from models.tables import Project as ProjectORM, File as FileORM
+from models.tables import Project as ProjectORM, File as FileORM, Flashcard as FlashcardORM
 from services.extractor import ContentExtractor
+from services.card_generator import CardGenerator
 
 router = APIRouter(tags=["files"])
 
@@ -38,9 +39,10 @@ class FileMeta(BaseModel):
 
 @router.post("/projects/{project_id}/files", response_model=List[dict])
 async def upload_files(
-    project_id: str, 
-    files: List[UploadFile] = File(...), 
-    category: str = "lecture_notes",
+    project_id: str,
+    files: List[UploadFile] = File(...),
+    provider: str = "lmstudio",
+    openai_api_key: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """
@@ -48,16 +50,29 @@ async def upload_files(
     - Stores the file on the filesystem in category-specific subdirectory
     - Extracts text with OCR (PDF/Image)
     - Stores extraction as JSON and Markdown
-    - category: 'lecture_notes' or 'extended_info'
+    - Generates flashcards using specified LLM provider
+    
+    Query parameters:
+    - provider: "lmstudio" (default) or "openai"
+    - openai_api_key: Required if provider is "openai"
     """
     project = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Validate and determine category directory
-    if category not in ["lecture_notes", "extended_info"]:
-        category = "lecture_notes"
-    category_dir = LECTURE_NOTES_DIR if category == "lecture_notes" else EXTENDED_INFO_DIR
+    # Initialize CardGenerator with selected provider
+    try:
+        if provider == "openai":
+            if not openai_api_key:
+                raise HTTPException(
+                    status_code=400,
+                    detail="openai_api_key is required when using OpenAI provider"
+                )
+            generator = CardGenerator(provider="openai", openai_api_key=openai_api_key)
+        else:
+            generator = CardGenerator(provider="lmstudio")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     results = []
     for f in files:
@@ -98,6 +113,34 @@ async def upload_files(
             with open(extracted_md_path, "w", encoding="utf-8") as mf:
                 mf.writelines(md_lines)
             
+            # Generate flashcards automatically
+            generated_cards = generator.generate_cards_from_document(
+                document=processed,
+                cards_per_chunk=3,
+                difficulty_level=0
+            )
+            
+            # Save generated cards to database
+            cards_saved = []
+            for card in generated_cards:
+                flashcard = FlashcardORM(
+                    question=card.question,
+                    answer=card.answer,
+                    level=card.level,
+                    important=0,
+                    review_count=0,
+                    project_id=project_id
+                )
+                db.add(flashcard)
+                db.commit()
+                db.refresh(flashcard)
+                cards_saved.append({
+                    "id": flashcard.id,
+                    "question": flashcard.question,
+                    "answer": flashcard.answer,
+                    "level": flashcard.level
+                })
+            
             results.append({
                 "file": {
                     "id": file_record.id,
@@ -106,7 +149,9 @@ async def upload_files(
                     "size": file_record.size,
                     "category": file_record.category
                 },
-                "processed": processed.dict()
+                "processed": processed.dict(),
+                "generated_cards": cards_saved,
+                "cards_count": len(cards_saved)
             })
         
         except Exception as e:

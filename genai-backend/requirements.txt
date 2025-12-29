@@ -6,3 +6,5 @@ pydantic
 PyMuPDF
 pytesseract
 Pillow
+lmstudio
+requests

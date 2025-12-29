@@ -7,14 +7,22 @@ export const uploadsAPI = {
    * Upload files to a project
    * @param {string} projectId - Project ID
    * @param {Array<File>} files - Array of File objects
-   * @param {string} category - 'lecture_notes' or 'extended_info'
+   * @param {Object} options - Upload options { provider, openaiApiKey }
    * @returns {Promise<Array>} Array of upload results with file metadata and processed data
    */
-  upload: async (projectId, files, category = 'lecture_notes') => {
+  upload: async (projectId, files, options = {}) => {
+    const { provider = 'lmstudio', openaiApiKey = '' } = options;
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
     
-    const response = await fetch(`${BASE_URL}/projects/${projectId}/files?category=${encodeURIComponent(category)}`, {
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    queryParams.append('provider', provider);
+    if (provider === 'openai' && openaiApiKey) {
+      queryParams.append('openai_api_key', openaiApiKey);
+    }
+    
+    const response = await fetch(`${BASE_URL}/projects/${projectId}/files?${queryParams.toString()}`, {
       method: 'POST',
       body: formData,
       // Don't set Content-Type for FormData – browser sets it with boundary

@@ -14,8 +14,9 @@ export default function UploadZone({ onCreated }) {
   const [lectureDropActive, setLectureDropActive] = useState(false);
   const [extendedDropActive, setExtendedDropActive] = useState(false);
   const [errorMessages, setErrorMessages] = useState([]);
-  const [flashcardScope, setFlashcardScope] = useState('all_slides'); // all_slides | per_set | per_slide
-  const [flashcardDensity, setFlashcardDensity] = useState(5); // adjustable range
+  const [provider, setProvider] = useState('lmstudio');
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   const validate = (file) => {
     if (file.type.startsWith('video/')) return 'Videos are not allowed';
@@ -99,30 +100,18 @@ export default function UploadZone({ onCreated }) {
     const totalFiles = lectureFiles.length + extendedFiles.length;
     if (totalFiles === 0) return alert('No files selected');
     if (!projectName.trim()) return alert('Please enter a project name');
+    if (provider === 'openai' && !openaiApiKey.trim()) {
+      return alert('OpenAI API key is required for OpenAI provider');
+    }
     setUploading(true);
     try {
       const pid = await ensureServerProject();
-      console.log('📤 Upload started', { projectId: pid, lecture: lectureFiles.length, extended: extendedFiles.length });
-      
-      const results = [];
-      
-      // Upload lecture notes
-      if (lectureFiles.length > 0) {
-        const lectureResult = await uploadsAPI.upload(pid, lectureFiles, 'lecture_notes');
-        results.push(...(Array.isArray(lectureResult) ? lectureResult : [lectureResult]));
-      }
-      
-      // Upload extended info
-      if (extendedFiles.length > 0) {
-        const extendedResult = await uploadsAPI.upload(pid, extendedFiles, 'extended_info');
-        results.push(...(Array.isArray(extendedResult) ? extendedResult : [extendedResult]));
-      }
-      
-      console.log('✅ Upload finished', results);
-      const summary = results.map(r=>`${r.file.original_filename}: ${r.processed.chunks?.length||0} sections`).join('\n');
-      alert(`✅ ${totalFiles} file(s) uploaded & processed.\n\n${summary}`);
-      setLectureFiles([]);
-      setExtendedFiles([]);
+      console.log('📤 Upload started', { projectId: pid, files: files.length, provider });
+      const result = await uploadsAPI.upload(pid, files, { provider, openaiApiKey });
+      console.log('✅ Upload finished', result);
+      const summary = Array.isArray(result) ? result.map(r=>`${r.file.original_filename}: ${r.cards_count || 0} cards`).join('\n') : 'n/a';
+      alert(`✅ ${files.length} file(s) uploaded & processed.\n\n${summary}`);
+      setFiles([]);
       setErrorMessages([]);
       if (onCreated) onCreated(pid);
     } catch (e) {
@@ -186,68 +175,60 @@ export default function UploadZone({ onCreated }) {
         )}
       </div>
 
-      {/* Flashcard Settings */}
-      <div className="p-4 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/30 space-y-4">
-        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Flashcard Generation Settings</h3>
-        
-        {/* Scope Selector */}
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Scope</label>
-          <div className="grid grid-cols-3 gap-2">
-            {scopeOptions.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setFlashcardScope(opt.value)}
-                className={`p-3 rounded-lg border text-xs transition-all ${flashcardScope === opt.value ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' : 'border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600'}`}
-              >
-                <div className="font-semibold">{opt.label}</div>
-                <div className="text-[10px] text-zinc-500 dark:text-zinc-500 mt-1">{opt.description}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Density Control (slider + manual input) */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Density</label>
-            <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">{flashcardDensity}</span>
-          </div>
-          {/* Dynamic slider max: allow much higher for 'all_slides' and 'per_set' */}
-          {(() => {
-            const max = (flashcardScope === 'all_slides' || flashcardScope === 'per_set') ? 100 : 20;
-            return (
-              <input
-                type="range"
-                min="1"
-                max={max}
-                value={Math.min(flashcardDensity, max)}
-                onChange={(e) => setFlashcardDensity(parseInt(e.target.value))}
-                className="w-full accent-cyan-500"
-              />
-            );
-          })()}
-          <div className="flex items-center gap-2">
+      <div className="space-y-3 p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700">
+        <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">AI Provider for Card Generation</label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 cursor-pointer">
             <input
-              type="number"
-              min={1}
-              max={999}
-              value={flashcardDensity}
-              onChange={(e)=>{
-                const v = parseInt(e.target.value || '1');
-                setFlashcardDensity(Math.max(1, Math.min(999, v)));
+              type="radio"
+              value="lmstudio"
+              checked={provider === 'lmstudio'}
+              onChange={(e) => {
+                setProvider(e.target.value);
+                setShowApiKeyInput(false);
               }}
-              className="w-24 px-2 py-1 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
+              className="w-4 h-4 text-cyan-500 focus:ring-cyan-500"
             />
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-500">Set manually</span>
-          </div>
-          <div className="flex justify-between text-[10px] text-zinc-500 dark:text-zinc-500">
-            <span>Few cards</span>
-            <span>Many cards</span>
-          </div>
+            <span className="text-sm text-zinc-700 dark:text-zinc-300">LMStudio (Local)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              value="openai"
+              checked={provider === 'openai'}
+              onChange={(e) => {
+                setProvider(e.target.value);
+                setShowApiKeyInput(true);
+              }}
+              className="w-4 h-4 text-cyan-500 focus:ring-cyan-500"
+            />
+            <span className="text-sm text-zinc-700 dark:text-zinc-300">OpenAI</span>
+          </label>
         </div>
-      </div>
 
+        {provider === 'openai' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="space-y-2 mt-3 pt-3 border-t border-zinc-300 dark:border-zinc-700"
+          >
+            <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">OpenAI API Key</label>
+            <input
+              type={showApiKeyInput ? 'password' : 'password'}
+              value={openaiApiKey}
+              onChange={(e) => setOpenaiApiKey(e.target.value)}
+              placeholder="sk-..."
+              className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500"
+            />
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:text-cyan-400 underline">platform.openai.com/api-keys</a></p>
+          </motion.div>
+        )}
+
+        {provider === 'lmstudio' && (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 pt-2">Make sure LMStudio is running on http://172.28.112.1:1234</p>
+        )}
+      </div>
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 text-transparent bg-clip-text">Upload Files</h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Separate lecture notes from extended information.</p>
