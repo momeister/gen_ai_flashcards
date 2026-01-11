@@ -20,6 +20,7 @@ export default function UploadZone({ onCreated }) {
   const [flashcardScope, setFlashcardScope] = useState('all_slides');
   const [flashcardDensity, setFlashcardDensity] = useState(5);
   const [lmstudioUrl, setLmstudioUrl] = useState('http://127.0.0.1:1234/v1');
+  const [difficulty, setDifficulty] = useState(1);
 
   const validate = (file) => {
     if (file.type.startsWith('video/')) return 'Videos are not allowed';
@@ -110,7 +111,7 @@ export default function UploadZone({ onCreated }) {
     try {
       const pid = await ensureServerProject();
       const uploads = [];
-      const uploadOptions = { provider, openaiApiKey, lmstudioUrl };
+      const uploadOptions = { provider, openaiApiKey, lmstudioUrl, difficulty };
       if (lectureFiles.length) uploads.push(uploadsAPI.upload(pid, lectureFiles, { ...uploadOptions, category: 'lecture_notes' }));
       if (extendedFiles.length) uploads.push(uploadsAPI.upload(pid, extendedFiles, { ...uploadOptions, category: 'extended_info' }));
       console.log('📤 Upload started', { projectId: pid, lecture: lectureFiles.length, extended: extendedFiles.length, provider });
@@ -213,6 +214,20 @@ export default function UploadZone({ onCreated }) {
             />
             <span className="text-sm text-zinc-700 dark:text-zinc-300">OpenAI</span>
           </label>
+        </div>
+
+        {/* Difficulty selection 1–4 */}
+        <div className="mt-3">
+          <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">Difficulty (1–4)</label>
+          <select
+            value={difficulty}
+            onChange={(e)=> setDifficulty(Number(e.target.value))}
+            className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 text-zinc-900 dark:text-zinc-100"
+          >
+            {[1,2,3,4].map(n => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
         </div>
 
         {provider === 'openai' && (

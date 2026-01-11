@@ -45,6 +45,7 @@ async def upload_files(
     category: str = "lecture_notes",
     lmstudio_url: Optional[str] = None,
     openai_api_key: Optional[str] = None,
+    difficulty: int = 1,
     db: Session = Depends(get_db)
 ):
     """
@@ -69,6 +70,17 @@ async def upload_files(
         raise HTTPException(status_code=400, detail="Invalid category")
     category_dir = LECTURE_NOTES_DIR if category == "lecture_notes" else EXTENDED_INFO_DIR
     lmstudio_url = lmstudio_url or "http://127.0.0.1:1234/v1"
+
+    # Normalize difficulty (frontend sends 1–4, internal uses 0–3)
+    try:
+        diff = int(difficulty)
+    except Exception:
+        diff = 1
+    if diff < 1:
+        diff = 1
+    if diff > 4:
+        diff = 4
+    difficulty_level = diff - 1
     
     # Initialize CardGenerator with selected provider
     try:
@@ -127,7 +139,7 @@ async def upload_files(
             generated_cards = generator.generate_cards_from_document(
                 document=processed,
                 cards_per_chunk=3,
-                difficulty_level=0
+                difficulty_level=difficulty_level
             )
             
             # Save generated cards to database
