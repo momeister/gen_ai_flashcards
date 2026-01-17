@@ -41,7 +41,6 @@ class CardGenerator:
     def __init__(
         self,
         provider: Literal["lmstudio", "openai"] = "lmstudio",
-        #lmstudio_url: str = "http://172.28.112.1:1234/v1",
         lmstudio_url: str = "http://127.0.0.1:1234/v1",
         openai_api_key: Optional[str] = None,
         openai_model: str = "gpt-4.1-nano"
@@ -115,6 +114,8 @@ class CardGenerator:
         mode: Literal["direct", "two_step", "three_step"] = "three_step",
         max_concepts: int = 6,
     ) -> List[GeneratedFlashcard]:
+        difficulty_names = {0: "easy", 1: "medium", 2: "hard", 3: "expert"}
+        print(f"[CARD GEN] Mode: {mode}, Difficulty: {difficulty_names.get(difficulty_level, 'unknown')} (level={difficulty_level})")
         """
         Generate flashcards from a single text string.
         
@@ -188,7 +189,8 @@ class CardGenerator:
                 
                 for card in cards:
                     card.level = difficulty_level
-                    
+                
+                print(f"✅ [CARD GEN] Generated {len(cards)} cards with level={difficulty_level}")
                 return cards
              
             except Exception as e:

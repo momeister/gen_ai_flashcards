@@ -81,6 +81,7 @@ async def upload_files(
     if diff > 4:
         diff = 4
     difficulty_level = diff - 1
+    print(f"[DIFFICULTY] Frontend sent: {difficulty} → Backend uses: difficulty_level={difficulty_level}")
     
     # Initialize CardGenerator with selected provider
     try:
@@ -136,6 +137,7 @@ async def upload_files(
                 mf.writelines(md_lines)
             
             # Generate flashcards automatically
+            print(f"🃏 [CARD GEN] Generating cards with difficulty_level={difficulty_level} for file: {f.filename}")
             generated_cards = generator.generate_cards_from_document(
                 document=processed,
                 cards_per_chunk=3,
