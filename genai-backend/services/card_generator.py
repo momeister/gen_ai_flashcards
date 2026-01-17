@@ -21,6 +21,13 @@ class GeneratedFlashcard(BaseModel):
     answer: str
     level: int = 0
 
+class CandidateConcept(BaseModel):
+    id: str
+    raw_question: str
+    evidence: str
+    potential_answer: str
+    relevance_score: float  # LLM's initial guess on importance
+    is_redundant: bool = False
 
 class LLMProvider(str, Enum):
     """Available LLM providers for card generation."""
@@ -93,11 +100,11 @@ class CardGenerator:
         return all_cards
     
     
-    def _call_llm(self, prompt: str, max_tokens: int = 2000) -> str:
+    def _call_llm(self, prompt: str, max_tokens: int = 2000, temperature: float = 0.3) -> str:
         """Route to the configured provider (LMStudio or OpenAI)."""
         if self.provider == LLMProvider.LMSTUDIO:
-            return self._call_lmstudio(prompt, max_tokens)
-        return self._call_openai(prompt, max_tokens)
+            return self._call_lmstudio(prompt, max_tokens, temperature)
+        return self._call_openai(prompt, max_tokens, temperature)
     
     
     def generate_cards_from_text(
@@ -105,7 +112,7 @@ class CardGenerator:
         text: str,
         num_cards: int = 3,
         difficulty_level: int = 0,
-        mode: Literal["direct", "two_step"] = "two_step",
+        mode: Literal["direct", "two_step", "three_step"] = "three_step",
         max_concepts: int = 6,
     ) -> List[GeneratedFlashcard]:
         """
@@ -144,76 +151,258 @@ class CardGenerator:
 
         elif mode == "two_step":
             try:
-                planned = self.plan_concepts(text=text, max_concepts=max_concepts)
-                concepts = planned
-                prompt = self._create_concept_cards_prompt(text, concepts, difficulty_level)
+                planned = self.b1_concepts(text=text, max_concepts=max_concepts)
+                prompt = self._create_concept_cards_prompt(text, planned, difficulty_level)
                 response = self._call_llm(prompt)
                 cards = self._parse_cards_response(response)
+                
+                
                 for card in cards:
                     card.level = difficulty_level
                 return cards
             except Exception as e:
                 print(f"Error generating cards (two_step): {e}")
                 return []
+        elif mode == "three_step":
+            # Future implementation for 3-step process
+            """
+                Why this is better than "Two-Step"
+                Redundancy Check: In a two-step process, the LLM often generates three very similar questions for the same paragraph. In the three-step process, Step 2 explicitly looks at the whole list of candidates and deletes duplicates before generation starts.
+
+                Hallucination Filter: By forcing the LLM to provide "Evidence" in Step 1 and then having a "Judge" verify that evidence in Step 2, you significantly reduce made-up answers.
+
+                Strict Formatting: Step 3 focuses only on the JSON structure and prose quality, which prevents the LLM from getting "distracted" by the logic of finding concepts.
+                """
+                
+            try:
+                # Step 1: Brainstorm all possible candidates
+                candidates = self.c1_brainstorm_candidates(text)
+                if not candidates:
+                    return []
+                
+                # Step 2: Filter and select the best ones
+                selected_candidates = self.c2_filtering(text, candidates, max_concepts=num_cards)
+                
+                # Step 3: Final polish and formatting
+                cards = self.c3_refining(text, selected_candidates, difficulty_level)
+                
+                for card in cards:
+                    card.level = difficulty_level
+                    
+                return cards
+             
+            except Exception as e:
+                print(f"Error generating cards (three_step): {e}")
+                return []
+        
 
 
-    def plan_concepts(self, text: str, max_concepts: int = 6) -> List[PlannedConcept]:
+
+
+    def c1_brainstorm_candidates(self, text: str) -> List[CandidateConcept]:        
+        """Step 1: Atomic Fact Extraction & Multi-Question Brainstorming."""
+        
+        prompt = f"""
+        You are a Senior Professor. Your goal is to extract testable knowledge from this slide.
+    
+        PHASE 1: Identify 3-5 'Knowledge Atoms' (the fundamental facts needed for the exam).
+        PHASE 2: For each Atom, create 4 variations (one direct, one conceptual, two additional variations).
+        
+        EXAM-ONLY RULE:
+        - IGNORE: Headers, footer text, Professor names, dates, course codes, or 'Welcome' slides.
+        - FOCUS: Definitions, causal relationships, lists, and core theories.
+        
+        TEXT:
+        {text}
+
+        Return ONLY valid JSON:
+        {{
+        "candidates": [
+            {{
+            "id": "atom1_v1",
+            "raw_question": "Direct question style",
+            "evidence": "Source text snippet",
+            "potential_answer": "Concise answer",
+            "relevance_score": 0.9
+            }},
+            {{
+            "id": "atom1_v2",
+            "raw_question": "Scenario/Application style",
+            "evidence": "Source text snippet",
+            "potential_answer": "Concise answer",
+            "relevance_score": 0.8
+            }}
+        ]
+        }}
+        """
+        resp = self._call_llm(prompt, temperature=0.7)
+        #Higher creativity helps find varied ways to ask questions
+        try:
+            data = self._extract_json(resp)
+            return [CandidateConcept(**c) for c in data.get("candidates", [])]
+        except Exception as e:
+            print(f"Step 1 Error: {e}")
+            return []
+
+    def c2_filtering(self, text: str, candidates: List[CandidateConcept], max_concepts: int) -> List[CandidateConcept]:
+        """Step 2: Selection, De-duplication, and Metadata Purge."""
+        
+        candidates_json = json.dumps([c.model_dump() for c in candidates], indent=2)
+        
+        prompt = f"""
+        You are a Strict Exam Auditor. Your job is to discard 'garbage' flashcards.
+        
+        GOAL: Select the {max_concepts} best unique questions from the list.
+
+        REJECTION CRITERIA:
+        - 'Admin Fluff': Any mention of course names, authors, or slide numbers.
+        - 'The Obvious': Questions anyone could answer without studying (e.g., 'What is this slide about?').
+        - 'Hallucinations': Any fact NOT explicitly written in: "{text}"
+        - 'Redundancy': If two questions cover the same fact, pick the one that requires deeper thinking.
+        
+        SIMILARITY AUDIT:
+        - Compare the raw_question and potential_answer of all candidates.
+        - If two candidates test the same core piece of information (even if worded differently), they are Redundant.
+        - Keep only the variation that is most cognitively demanding or clear.
+        - Forbidden: Do not select two questions where knowing the answer to one makes the other trivial.
+        
+        CANDIDATES:
+        {candidates_json}
+
+        Return ONLY a JSON list of the "id" values to keep.
+        Example: {{"keep_ids": ["fact1_v2", "fact3_v1"]}}
+        """
+        resp = self._call_llm(prompt, temperature=0.1)
+        # We want the auditor to be cold, logical, and consistent
+        try:
+            keep_ids = self._extract_json(resp).get("keep_ids", [])
+            return [c for c in candidates if c.id in keep_ids]
+        except Exception as e:
+            print(f"Step 2 Error: {e}")
+            return candidates[:max_concepts]
+        
+  
+
+    def c3_refining(self, text: str, selected: List[CandidateConcept], difficulty_level: int) -> List[GeneratedFlashcard]:
+        """Step 3: Final Generation & Refinement
+        The final pass to turn the selected candidates into polished, high-quality flashcards with consistent formatting and difficulty leveling.
+
+        Goal: Final Polish.
+
+        Action: Ensure the answer is concise and the question is unambiguous.
+        """    
+        
+        difficulty_map = {0: "easy", 1: "medium", 2: "hard", 3: "expert"}
+        diff_str = difficulty_map.get(difficulty_level, "medium")
+        
+        selected_json = json.dumps([c.model_dump() for c in selected], indent=2)
+        
+        difficulty_instructions = {
+        0: "Focus on 'Remembering' (definitions, labels).",
+        1: "Focus on 'Understanding' (explaining concepts).",
+        2: "Focus on 'Applying' (how to use this fact in a scenario).",
+        3: "Focus on 'Analyzing' (comparing two concepts or finding cause-effect)."
+        }
+        task_focus = difficulty_instructions.get(difficulty_level, "medium")
+
+        prompt = f"""
+        Refine these candidates into professional flashcards.
+        
+        TASK: {task_focus}
+        SOURCE TEXT: {text}
+        
+        PROHIBITED PHRASES (Never use these):
+        - "According to the text..."
+        - "Based on the slide..."
+        - "In the provided information..."
+        - "The text states..."
+        
+        The question should stand alone as if it were on a real exam.
+        
+        RULES:
+        - No meta-statements (e.g., "The text does not mention...")
+        - Language must match the Source Text.
+        - Questions must be clear; Answers must be 1-3 sentences.
+        - Make sure the question is really worth asking in a context of learning for an exam.
+        
+        CONCEPTS: {selected_json}
+        
+        Return JSON: {{"results": [{{"question": "...", "answer": "..."}}]}}
+        """
+        resp = self._call_llm(prompt, temperature= 0.3)
+        try:
+            data = self._extract_json(resp)
+            return [GeneratedFlashcard(question=r["question"], answer=r["answer"]) for r in data.get("results", [])]
+        except Exception as e:
+            print(f"Step 3 Error: {e}")
+            return []
+
+
+
+
+
+    def b1_concepts(self, text: str, max_concepts: int = 6) -> List[PlannedConcept]:
         """
         Step 1 — Plan flashcard concepts with evidence and confidence.
         """
         planning_prompt = f"""
-You are a flashcard planner.
+        You are a flashcard planner.
 
-Task: select up to {max_concepts} flashcard concepts from the slide text.
+        Task: select up to {max_concepts} flashcard concepts from the slide text.
 
-Only select a concept if the slide contains enough explicit information
-to answer a factual question WITHOUT meta-statements.
+        Only select a concept if the slide contains enough explicit information
+        to answer a factual question WITHOUT meta-statements.
 
-For each concept, provide:
-- id (short unique string)
-- concept (short label)
-- question (candidate flashcard question)
-- evidence (exact words from the slide, 5–25 words)
-- confidence (float between 0.0 and 1.0)
-- should_generate (true or false)
+        For each concept, provide:
+        - id (short unique string)
+        - concept (short label)
+        - question (candidate flashcard question)
+        - evidence (exact words from the slide, 5–25 words)
+        - confidence (float between 0.0 and 1.0)
+        - should_generate (true or false)
 
-STRICT RULES:
-- Use ONLY the slide text (no external knowledge).
-- No speculation.
-- If a concept is only mentioned (name/title without explanation),
-  set should_generate=false.
-- Keep the output language the same as the slide language.
+        STRICT RULES:
+        - Use ONLY the slide text (no external knowledge).
+        - No speculation.
+        - If a concept is only mentioned (name/title without explanation),
+        set should_generate=false.
+        - Keep the output language the same as the slide language.
 
-Reject (should_generate=false) if the content is:
-- personal opinion/interview ("I", "me", "my", "m’", "je")
-- unclear/vague ("this role", "that", "the person at the time")
-- only a name/title without explanation
-- a question about the name or the date of publication.
+        Reject (should_generate=false) if the content is:
+        - personal opinion/interview ("I", "me", "my", "m’", "je")
+        - unclear/vague ("this role", "that", "the person at the time")
+        - only a name/title without explanation
+        - a question about the name or the date of publication.
 
-Return ONLY valid JSON in this shape:
-{{
-  "concepts": [
-    {{
-      "id": "c1",
-      "concept": "...",
-      "question": "...",
-      "evidence": "...",
-      "confidence": 0.0,
-      "should_generate": true
-    }}
-  ]
-}}
+        Return ONLY valid JSON in this shape:
+        {{
+        "concepts": [
+            {{
+            "id": "c1",
+            "concept": "...",
+            "question": "...",
+            "evidence": "...",
+            "confidence": 0.0,
+            "should_generate": true
+            }}
+        ]
+        }}
 
-Slide text:
-{text}
+        Slide text:
+        {text}
 
-JSON:
-"""
+        JSON:
+        """
 
         resp = self._call_llm(planning_prompt)
 
+        return self.process_b1_response(resp)
+
+
+    def process_b1_response(self, response: str) -> Any:
+        """Process the LLM response after b1_concepts step to extract JSON data."""
         try:
-            data = self._extract_json(resp)
+            data = self._extract_json(response)
             concepts: List[PlannedConcept] = []
 
             for c in data.get("concepts", []):
@@ -227,7 +416,6 @@ JSON:
                         should_generate=bool(c.get("should_generate", False)),
                     )
 
-                    # 🔒 HARD FILTER
                     if pc.should_generate and pc.confidence >= 0.6:
                         concepts.append(pc)
 
@@ -238,9 +426,9 @@ JSON:
 
         except Exception as e:
             print(f"Error parsing planning response: {e}")
-            print(f"Response: {resp}")
+            print(f"Response: {response}")
             return []
-
+        
 
     def _create_concept_cards_prompt(
     self,
@@ -263,47 +451,47 @@ JSON:
         )
 
         return f"""
-You are an expert educational flashcard writer.
+            You are an expert educational flashcard writer.
 
-Use ONLY the slide text for correctness.
-Write in the SAME language as the slide text.
+            Use ONLY the slide text for correctness.
+            Write in the SAME language as the slide text.
 
-For each concept, output exactly ONE result object:
-- status = "ok" with a question and answer
-- OR status = "skipped" with reason = "insufficient_evidence"
+            For each concept, output exactly ONE result object:
+            - status = "ok" with a question and answer
+            - OR status = "skipped" with reason = "insufficient_evidence"
 
-Never write meta-statements such as:
-- "the text does not provide details"
-- "no information is given"
-- "probably", "likely", "appears to be"
+            Never write meta-statements such as:
+            - "the text does not provide details"
+            - "no information is given"
+            - "probably", "likely", "appears to be"
 
-Difficulty: {difficulty}
+            Difficulty: {difficulty}
 
-Return ONLY valid JSON in this exact shape:
-{{
-  "results": [
-    {{
-      "concept_id": "...",
-      "status": "ok",
-      "question": "...",
-      "answer": "..."
-    }},
-    {{
-      "concept_id": "...",
-      "status": "skipped",
-      "reason": "insufficient_evidence"
-    }}
-  ]
-}}
+            Return ONLY valid JSON in this exact shape:
+            {{
+            "results": [
+                {{
+                "concept_id": "...",
+                "status": "ok",
+                "question": "...",
+                "answer": "..."
+                }},
+                {{
+                "concept_id": "...",
+                "status": "skipped",
+                "reason": "insufficient_evidence"
+                }}
+            ]
+            }}
 
-Slide text:
-{text}
+            Slide text:
+            {text}
 
-Concepts:
-{concepts_json}
+            Concepts:
+            {concepts_json}
 
-JSON:
-"""
+            JSON:
+            """
 
     def _parse_cards_response(self, response: str) -> List[GeneratedFlashcard]:
         try:
@@ -385,7 +573,7 @@ JSON Output:"""
         
         return prompt
     
-    def _call_lmstudio(self, prompt: str, max_tokens: int = 2000) -> str:
+    def _call_lmstudio(self, prompt: str, max_tokens: int = 2000, temperature: float = 0.3) -> str:
         """
         Make a request to LMStudio API.
         
@@ -407,7 +595,7 @@ JSON Output:"""
                     "content": prompt
                 }
             ],
-            "temperature": 0.3,
+            "temperature": temperature,
             "max_tokens": max_tokens,
             "stream": False
         }
@@ -422,7 +610,7 @@ JSON Output:"""
         result = response.json()
         return result["choices"][0]["message"]["content"]
     
-    def _call_openai(self, prompt: str, max_tokens: int = 2000) -> str:
+    def _call_openai(self, prompt: str, max_tokens: int = 2000, temperature: float = 0.3) -> str:
         """
         Make a request to OpenAI API.
         
@@ -449,7 +637,7 @@ JSON Output:"""
                     "content": prompt
                 }
             ],
-            "temperature": 0.7,
+            "temperature": temperature,
             "max_tokens": max_tokens
         }
         
@@ -502,3 +690,5 @@ JSON Output:"""
             print(f"Error parsing response: {e}")
             print(f"Response: {response}")
             return []
+
+
