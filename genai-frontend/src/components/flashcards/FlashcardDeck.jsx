@@ -19,6 +19,7 @@ export default function FlashcardDeck({ projectId }) {
   const [studyFilter, setStudyFilter] = useState('all'); // all | new | unsure | know_it | important
   // Generation controls
   const [generationCount, setGenerationCount] = useState(10);
+  const [difficulty, setDifficulty] = useState(1);
   const [draftSets, setDraftSets] = useState([]);
   const [files, setFiles] = useState([]);
   const [viewerFile, setViewerFile] = useState(null);
@@ -26,9 +27,9 @@ export default function FlashcardDeck({ projectId }) {
   const [folders, setFolders] = useState(() => {
     const stored = localStorage.getItem('flashcardFolders');
     return stored ? JSON.parse(stored) : [
-      { id: 'generated', name: 'Generierte Karten' },
-      { id: 'lecture1', name: 'Vorlesung 1' },
-      { id: 'custom', name: 'Eigener Ordner' },
+      { id: 'generated', name: 'Generated Cards' },
+      { id: 'lecture1', name: 'Lecture 1' },
+      { id: 'custom', name: 'Custom Folder' },
     ];
   });
   const [activeFolder, setActiveFolder] = useState('all');
@@ -204,8 +205,8 @@ export default function FlashcardDeck({ projectId }) {
   const stats = {
     total: cards.length,
     neu: cards.filter(c=>c.level==='new').length,
-    unsicher: cards.filter(c=>c.level==='unsure').length,
-    kann: cards.filter(c=>c.level==='know_it').length,
+    uncertain: cards.filter(c=>c.level==='unsure').length,
+    knowIt: cards.filter(c=>c.level==='know_it').length,
     important: cards.filter(c=>c.important).length,
   };
 
@@ -256,20 +257,38 @@ export default function FlashcardDeck({ projectId }) {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Neue Karte
+          New Card
         </motion.button>
 
         {/* 2. Generate cards from files */}
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface-variant border-2 border-token hover:border-accent transition-colors">
-          <label className="text-sm font-medium text-on-surface">Anzahl:</label>
-          <input
-            type="number"
-            min={1}
-            max={500}
-            value={generationCount}
-            onChange={e=>setGenerationCount(Math.max(1, Math.min(500, parseInt(e.target.value||'1'))))}
-            className="w-16 px-2 py-1 text-center bg-card border border-token rounded text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-accent"
-          />
+        <div className="flex items-center gap-4 px-4 py-2.5 rounded-lg bg-surface-variant border-2 border-token hover:border-accent transition-colors">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-on-surface">Count:</label>
+            <input
+              type="number"
+              min={1}
+              max={500}
+              value={generationCount}
+              onChange={e=>setGenerationCount(Math.max(1, Math.min(500, parseInt(e.target.value||'1'))))}
+              className="w-16 px-2 py-1 text-center bg-card border border-token rounded text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-accent"
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-on-surface">Difficulty:</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min={1}
+                max={4}
+                value={difficulty}
+                onChange={(e) => setDifficulty(Number(e.target.value))}
+                className="w-32 h-2 bg-token rounded-lg appearance-none cursor-pointer accent-amber-500"
+              />
+              <span className="text-sm font-semibold text-amber-500 min-w-[2rem] text-center">{difficulty}</span>
+            </div>
+          </div>
+
           <motion.button 
             whileHover={{scale:1.05}} 
             whileTap={{scale:0.95}} 
@@ -286,7 +305,7 @@ export default function FlashcardDeck({ projectId }) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            Generieren
+            Generate
           </motion.button>
         </div>
 
@@ -303,18 +322,18 @@ export default function FlashcardDeck({ projectId }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Lernen ({studyCards.length})
+            Learn ({studyCards.length})
           </motion.button>
           <select 
             value={studyFilter} 
             onChange={e=>setStudyFilter(e.target.value)} 
             className="px-4 py-2.5 rounded-lg bg-surface-variant border-2 border-token text-on-surface font-medium hover:border-accent transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent"
           >
-            <option value="all">Alle</option>
-            <option value="new">Neu</option>
-            <option value="unsure">Unsicher</option>
-            <option value="know_it">Kann ich</option>
-            <option value="important">⭐ Wichtig</option>
+            <option value="all">All</option>
+            <option value="new">New</option>
+            <option value="unsure">Uncertain</option>
+            <option value="know_it">Know it</option>
+            <option value="important">⭐ Important</option>
           </select>
         </div>
 
@@ -335,16 +354,16 @@ export default function FlashcardDeck({ projectId }) {
       {/* Folder Management */}
       <div className="flex flex-wrap items-center gap-3 bg-surface-variant border border-token rounded-xl p-3">
         <div className="flex items-center gap-2">
-          <label className="text-sm text-on-muted">Ordner:</label>
+          <label className="text-sm text-on-muted">Folder:</label>
           <select value={activeFolder} onChange={e=>{ setActiveFolder(e.target.value); setPage(1); }} className="px-3 py-2 rounded-lg bg-card border border-token text-on-surface">
-            <option value="all">Alle</option>
+            <option value="all">All</option>
             {folders.map(f => (
               <option key={f.id} value={f.id}>{f.name}</option>
             ))}
           </select>
         </div>
         <div className="flex items-center gap-2">
-          <input id="newFolderName" placeholder="Neuer Ordner…" className="px-3 py-2 rounded-lg bg-card border border-token text-on-surface w-48 focus:outline-none" />
+          <input id="newFolderName" placeholder="New Folder…" className="px-3 py-2 rounded-lg bg-card border border-token text-on-surface w-48 focus:outline-none" />
           <button className="btn" onClick={()=>{
             const el = document.getElementById('newFolderName');
             const name = (el?.value || '').trim();
@@ -353,7 +372,7 @@ export default function FlashcardDeck({ projectId }) {
             if (folders.some(f=>f.id===id)) return;
             setFolders(prev=>[...prev, { id, name }]);
             if (el) el.value = '';
-          }}>Erstellen</button>
+          }}>Create</button>
         </div>
       </div>
 
@@ -377,8 +396,8 @@ export default function FlashcardDeck({ projectId }) {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center text-xs">
         <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Total<br /><span className="text-cyan-500 dark:text-cyan-400 font-semibold text-2xl">{stats.total}</span></motion.div>
         <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">New<br /><span className="text-cyan-500 dark:text-cyan-400 font-semibold text-2xl">{stats.neu}</span></motion.div>
-        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Unsure<br /><span className="text-yellow-500 dark:text-yellow-400 font-semibold text-2xl">{stats.unsicher}</span></motion.div>
-        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Know It<br /><span className="text-green-500 dark:text-green-400 font-semibold text-2xl">{stats.kann}</span></motion.div>
+        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Uncertain<br /><span className="text-yellow-500 dark:text-yellow-400 font-semibold text-2xl">{stats.uncertain}</span></motion.div>
+        <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Know It<br /><span className="text-green-500 dark:text-green-400 font-semibold text-2xl">{stats.knowIt}</span></motion.div>
         <motion.div whileHover={{scale:1.05, y:-2}} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700 shadow-md transition-all">Important<br /><span className="text-yellow-500 dark:text-yellow-300 font-semibold text-2xl">{stats.important}</span></motion.div>
       </div>
       {/* Overview list – Polaroid cards */}
@@ -418,7 +437,7 @@ export default function FlashcardDeck({ projectId }) {
                   style={{ transformStyle:'preserve-3d' }}
                 >
                   {/* Drag handle (small area to initiate swap) */}
-                  <div className="drag-handle absolute left-2 top-2 w-6 h-6 rounded-md bg-surface-variant border border-token flex items-center justify-center cursor-grab select-none" title="Karte tauschen (ziehen)">
+                  <div className="drag-handle absolute left-2 top-2 w-6 h-6 rounded-md bg-surface-variant border border-token flex items-center justify-center cursor-grab select-none" title="Swap card (drag)">
                     <svg className="w-4 h-4 text-on-muted" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M7 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zM4 9a1 1 0 011-1h11a1 1 0 110 2H5a1 1 0 01-1-1zm3 5a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
                     </svg>
