@@ -99,7 +99,7 @@ class CardGenerator:
         return all_cards
     
     
-    def _call_llm(self, prompt: str, max_tokens: int = 2000, temperature: float = 0.3) -> str:
+    def _call_llm(self, prompt: str, max_tokens: int = 20000, temperature: float = 0.3) -> str:
         """Route to the configured provider (LMStudio or OpenAI)."""
         if self.provider == LLMProvider.LMSTUDIO:
             return self._call_lmstudio(prompt, max_tokens, temperature)
@@ -610,7 +610,10 @@ JSON Output:"""
         response.raise_for_status()
         
         result = response.json()
-        return result["choices"][0]["message"]["content"]
+        content = result["choices"][0]["message"]["content"]
+        if "</think>" in content:
+            content = content.split("</think>")[1]
+        return content
     
     def _call_openai(self, prompt: str, max_tokens: int = 2000, temperature: float = 0.3) -> str:
         """
