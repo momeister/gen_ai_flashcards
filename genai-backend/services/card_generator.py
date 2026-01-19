@@ -5,7 +5,16 @@ from typing import List, Optional, Literal, Any
 from enum import Enum
 from models.schemas import ProcessedDocument, TextChunk
 from pydantic import BaseModel
+import logging
+import time # Import time to track duration
 
+# Configure logging (you can also do this in your main.py)
+logging.basicConfig(
+    level=logging.INFO, # Change to DEBUG for detailed LLM responses
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%H:%M:%S'
+)
+logger = logging.getLogger("CardGen")
 
 class PlannedConcept(BaseModel):
     id: str
@@ -88,6 +97,12 @@ class CardGenerator:
         Returns:
             List of GeneratedFlashcard objects
         """
+        
+        # [LOGGING] Start of job
+        total_chunks = len(document.chunks)
+        logger.info(f"🚀 Starting generation for document. Chunks: {total_chunks} | Difficulty: {difficulty_level}")
+        start_time = time.time()
+        
         # Map depth_level to mode
         depth_to_mode = {1: "direct", 2: "two_step", 3: "three_step"}
         mode = depth_to_mode.get(depth_level, "three_step")
@@ -96,24 +111,54 @@ class CardGenerator:
         
         all_cards = []
         
-        for chunk in document.chunks:
-            cards = self.generate_cards_from_text(
+        for i, chunk in enumerate(document.chunks, start=1):
+            # [LOGGING] Progress tracker
+            logger.info(f"📄 Processing Chunk {i}/{total_chunks} (Length: {len(chunk.text)} chars)...")
+            
+            chunk_cards = self.generate_cards_from_text(
                 text=chunk.text,
                 num_cards=cards_per_chunk,
                 difficulty_level=difficulty_level,
                 mode=mode
             )
-            all_cards.extend(cards)
+            
+            # [LOGGING] Per-chunk result
+            if chunk_cards:
+                logger.info(f"   ✅ Chunk {i} produced {len(chunk_cards)} cards.")
+            else:
+                logger.warning(f"   ⚠️ Chunk {i} produced 0 cards.")
+            all_cards.extend(chunk_cards)
+            
+            print(f"   ✅ Slide {i} finished: {len(chunk_cards)} cards generated.")
+        
+        # [LOGGING] Final summary
+        duration = time.time() - start_time
+        logger.info(f"🏁 Finished. Processed {total_chunks} slides. Total Cards: {len(all_cards)} | Time: {duration:.2f}s | Avg: {duration/total_chunks:.2f}s/chunk")
         
         return all_cards
     
     
     def _call_llm(self, prompt: str, max_tokens: int = 20000, temperature: float = 0.3) -> str:
         """Route to the configured provider (LMStudio or OpenAI)."""
-        if self.provider == LLMProvider.LMSTUDIO:
-            return self._call_lmstudio(prompt, max_tokens, temperature)
-        return self._call_openai(prompt, max_tokens, temperature)
-    
+        start = time.time()
+        
+        try:
+            if self.provider == LLMProvider.LMSTUDIO:
+                resp = self._call_lmstudio(prompt, max_tokens, temperature)
+            else:
+                resp = self._call_openai(prompt, max_tokens, temperature)
+            
+            elapsed = time.time() - start
+            # [LOGGING] Performance metric (only show if it takes > 5 seconds)
+            if elapsed > 5.0:
+                logger.info(f"Slow LLM Response: {elapsed:.2f}s")
+            
+            return resp
+            
+        except Exception as e:
+            logger.critical(f"LLM Provider Failure ({self.provider}): {e}")
+            raise e
+      
     
     def generate_cards_from_text(
         self,
@@ -187,11 +232,17 @@ class CardGenerator:
             try:
                 # Step 1: Brainstorm all possible candidates
                 candidates = self.c1_brainstorm_candidates(text)
+                
+                # [LOGGING] Track C1 output
+                logger.debug(f"   [C1] Brainstormed {len(candidates)} candidates.")
+                
                 if not candidates:
                     return []
                 
                 # Step 2: Filter and select the best ones
                 selected_candidates = self.c2_filtering(text, candidates, max_concepts=num_cards)
+                # [LOGGING] Track C2 output
+                logger.debug(f"   [C2] Filter kept {len(selected_candidates)} candidates.")
                 
                 # Step 3: Final polish and formatting
                 cards = self.c3_refining(text, selected_candidates, difficulty_level)
@@ -203,6 +254,8 @@ class CardGenerator:
                 return cards
              
             except Exception as e:
+                # [LOGGING] Catch generic errors with stack trace
+                logger.error(f"❌ Error in 3-step generation: {e}", exc_info=True)
                 print(f"Error generating cards (three_step): {e}")
                 return []
         
@@ -253,6 +306,9 @@ class CardGenerator:
             return [CandidateConcept(**c) for c in data.get("candidates", [])]
         except Exception as e:
             print(f"Step 1 Error: {e}")
+            # [LOGGING] Specific step error
+            logger.error(f"   [C1 Error] Failed to parse candidates: {e}")
+            logger.debug(f"   [C1 Raw Response] {resp}") # Very helpful for debugging bad JSON
             return []
 
     def c2_filtering(self, text: str, candidates: List[CandidateConcept], max_concepts: int) -> List[CandidateConcept]:
