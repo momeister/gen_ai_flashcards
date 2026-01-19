@@ -1,0 +1,28 @@
+﻿What is the primary purpose of applying LLM capabilities to group projects?,To enhance the effectiveness and efficiency of group projects using large language models.,new,0,hallucinating
+What fundamental capability of LLMs is utilized in group projects?,Their ability to process and generate human-like language to support group tasks.,new,0,hallucinating
+How do LLMs contribute to idea generation in group projects?,By providing suggestions and expanding on group ideas based on large language understanding.,new,0,hallucinating
+What is the first mode of Personal Knowledge Management (PKM) according to the model?,The first mode is Collect.,new,0,trivial
+What does the 'Surface' mode in PKM involve?,The Surface mode involves finding collected thoughts through active search or passive review.,new,0,
+What does the 'Synthesize' mode involve in PKM?,Combining collected ideas to create new knowledge.,new,0,
+What is a foundation model?,A foundation model is a base model typically trained for next token prediction or text completion tasks.,new,0,
+What are fine-tuned models?,"Fine-tuned models are specialized models adapted for specific tasks, including instruct models, chat models, and multi-modal models.",new,0,
+What are embedding models used for?,"Embedding models produce dense vector representations of data for tasks such as similarity search, clustering, and recommendations.",new,0,
+What are the weights in an LLM?,Weights are the parameters learned during training that determine how the model processes input and produces output.,new,0,
+What constitutes the context in an LLM?,"Context includes all the textual information provided to the model during inference, such as prompts and chat history.",new,0,
+What is the impact of large context windows on an LLM?,Large context windows can lead to the model forgetting information in the middle of the context.,new,0,
+What is In-Context Learning in the context of Large Language Models?,In-Context Learning is a method where LLMs adapt to new tasks using examples provided in the prompt without updating parameters.,new,0,
+What is Zero-Shot Prompting?,"Zero-Shot Prompting involves performing a task without any examples in the prompt, relying on pre-trained knowledge.",new,0,
+What characterizes Few-Shot Prompting?,Few-Shot Prompting provides multiple examples to improve the model's task adaptation and understanding.,new,0,
+How does fine-tuning differ from in-context learning?,"Fine-tuning modifies the model's parameters directly, while in-context learning uses examples within prompts without changing model weights.",new,0,
+What are the typical uses of fine-tuning?,Fine-tuning is mainly used to improve model accuracy and formatting for specific tasks.,new,0,
+What are the limitations of fine-tuning?,"Fine-tuning can cause overfitting and catastrophic forgetting, making it unsuitable for adding new knowledge.",new,0,
+What is the benefit of using chains of operations in creating LLM flows?,"Chains of operations often work better than zero-shot, improving performance by breaking tasks into manageable steps.",new,0,
+What is an example of a multi-step process in creating LLM workflows?,"Using multiple LLM calls for tasks like summarizing, extracting, and formatting separately.",new,0,
+What tools or frameworks support multi-step composition in LLM workflows?,Frameworks like LangChain and flow engineering tools support multi-step composition.,new,0,not accepted
+What is the purpose of managing conversation state in chat applications?,To maintain relevant context and ensure effective communication within token limits.,new,0,not accepted
+What are common data formats used for structured input/output handling?,"JSON schemas, XML templates, and custom formats.",new,0,
+What is the role of workflows and chains in AI processing?,To connect multiple language model calls in sequence for complex processing.,new,0,
+What is the purpose of the initial processing step in multi-step processing?,It extracts key information or performs initial analysis on raw input data.,new,0,
+What is the function of intermediate steps in multi-step processing?,"They refine, validate, or transform outputs from earlier steps.",new,0,
+What is the goal of the final generation step?,To synthesize all intermediate results into the final output.,new,0,
+Front,Back,Level,ReviewCount,
