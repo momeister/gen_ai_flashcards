@@ -73,7 +73,8 @@ class CardGenerator:
         self, 
         document: ProcessedDocument,
         cards_per_chunk: int = 3,
-        difficulty_level: int = 0
+        difficulty_level: int = 0,
+        depth_level: int = 1
     ) -> List[GeneratedFlashcard]:
         """
         Generate flashcards from a ProcessedDocument containing text chunks.
@@ -82,17 +83,25 @@ class CardGenerator:
             document: ProcessedDocument with extracted text chunks
             cards_per_chunk: Number of flashcards to generate per text chunk
             difficulty_level: Difficulty level for generated cards (0-3)
+            depth_level: Thinking depth (1=normal/direct, 2=deep/two_step, 3=deep_deep/three_step)
         
         Returns:
             List of GeneratedFlashcard objects
         """
+        # Map depth_level to mode
+        depth_to_mode = {1: "direct", 2: "two_step", 3: "three_step"}
+        mode = depth_to_mode.get(depth_level, "three_step")
+        depth_labels = {1: "normal thinking", 2: "deep thinking", 3: "deep deep thinking"}
+        print(f"🧠 [DEPTH→MODE] depth_level={depth_level} ({depth_labels.get(depth_level, 'unknown')}) → mode={mode}")
+        
         all_cards = []
         
         for chunk in document.chunks:
             cards = self.generate_cards_from_text(
                 text=chunk.text,
                 num_cards=cards_per_chunk,
-                difficulty_level=difficulty_level
+                difficulty_level=difficulty_level,
+                mode=mode
             )
             all_cards.extend(cards)
         

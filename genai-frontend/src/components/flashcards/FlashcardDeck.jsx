@@ -20,6 +20,7 @@ export default function FlashcardDeck({ projectId }) {
   // Generation controls
   const [generationCount, setGenerationCount] = useState(10);
   const [difficulty, setDifficulty] = useState(1);
+  const [depth, setDepth] = useState(1);
   const [draftSets, setDraftSets] = useState([]);
   const [files, setFiles] = useState([]);
   const [viewerFile, setViewerFile] = useState(null);
@@ -274,6 +275,28 @@ export default function FlashcardDeck({ projectId }) {
             />
           </div>
 
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-on-surface">Thinking Depth:</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={1}
+                max={3}
+                value={depth}
+                onChange={(e) => {
+                  const newDepth = Number(e.target.value);
+                  setDepth(newDepth);
+                  const depthLabel = {1: 'Normal Thinking', 2: 'Deep Thinking', 3: 'Deep Deep Thinking'}[newDepth];
+                  console.log(`🧠 [DEPTH] FlashcardDeck depth changed to: ${newDepth} (${depthLabel})`);
+                }}
+                className="w-48 h-2 bg-token rounded-lg appearance-none cursor-pointer accent-purple-500"
+              />
+              <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 min-w-[8rem]">
+                {depth === 1 ? 'Normal Thinking' : depth === 2 ? 'Deep Thinking' : 'Deep Deep Thinking'}
+              </span>
+            </div>
+          </div>
+
           <div className="flex items-center gap-3">
             <label className="text-sm font-medium text-on-surface">Difficulty:</label>
             <div className="flex items-center gap-2">
@@ -282,7 +305,11 @@ export default function FlashcardDeck({ projectId }) {
                 min={1}
                 max={4}
                 value={difficulty}
-                onChange={(e) => setDifficulty(Number(e.target.value))}
+                onChange={(e) => {
+                  const newDiff = Number(e.target.value);
+                  setDifficulty(newDiff);
+                  console.log(`📊 [DIFFICULTY] FlashcardDeck difficulty changed to: ${newDiff}`);
+                }}
                 className="w-32 h-2 bg-token rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
               <span className="text-sm font-semibold text-amber-500 min-w-[2rem] text-center">{difficulty}</span>
