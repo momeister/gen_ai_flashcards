@@ -11,7 +11,9 @@ export const uploadsAPI = {
    * @returns {Promise<Array>} Array of upload results with file metadata and processed data
    */
   upload: async (projectId, files, options = {}) => {
-    const { provider = 'lmstudio', openaiApiKey = '', category = 'lecture_notes', lmstudioUrl = 'http://127.0.0.1:1234/v1', difficulty = 1 } = options;
+    const { provider = 'lmstudio', openaiApiKey = '', category = 'lecture_notes', lmstudioUrl = 'http://127.0.0.1:1234/v1', difficulty = 1, depth = 1 } = options;
+    const depthLabel = {1: 'Normal Thinking', 2: 'Deep Thinking', 3: 'Deep Deep Thinking'}[depth] || 'Unknown';
+    console.log(`📡 [API] Uploading with difficulty=${difficulty}, depth=${depth} (${depthLabel})`);
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
     
@@ -21,6 +23,9 @@ export const uploadsAPI = {
     queryParams.append('category', category);
     if (difficulty) {
       queryParams.append('difficulty', String(difficulty));
+    }
+    if (depth) {
+      queryParams.append('depth', String(depth));
     }
     if (provider === 'lmstudio' && lmstudioUrl) {
       queryParams.append('lmstudio_url', lmstudioUrl);

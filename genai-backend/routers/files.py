@@ -46,6 +46,7 @@ async def upload_files(
     lmstudio_url: Optional[str] = None,
     openai_api_key: Optional[str] = None,
     difficulty: int = 1,
+    depth: int = 1,
     db: Session = Depends(get_db)
 ):
     """
@@ -60,6 +61,7 @@ async def upload_files(
     - openai_api_key: Required if provider is "openai"
     - category: "lecture_notes" (default) or "extended_info"
     - lmstudio_url: Optional override for LMStudio base URL (default: http://127.0.0.1:1234/v1)
+    - depth: Thinking depth level (1=normal thinking, 2=deep thinking, 3=deep deep thinking)
     """
     project = db.query(ProjectORM).filter(ProjectORM.id == project_id).first()
     if not project:
@@ -81,9 +83,21 @@ async def upload_files(
     if diff > 4:
         diff = 4
     difficulty_level = diff - 1
-    print(f"[DIFFICULTY] Frontend sent: {difficulty} → Backend uses: difficulty_level={difficulty_level}")
+    print(f"📊 [DIFFICULTY] Frontend sent: {difficulty} → Backend uses: difficulty_level={difficulty_level}")
     
-    # Initialize CardGenerator with selected provider
+    # Process depth parameter (1=normal, 2=deep, 3=deep deep)
+    try:
+        depth_value = int(depth)
+    except Exception:
+        depth_value = 1
+    if depth_value < 1:
+        depth_value = 1
+    if depth_value > 3:
+        depth_value = 3
+    depth_labels = {1: "normal thinking", 2: "deep thinking", 3: "deep deep thinking"}
+    depth_label = depth_labels[depth_value]
+    print(f"🧠 [DEPTH] Frontend sent: depth={depth} → Backend uses: depth_value={depth_value} ({depth_label})")
+    print(f"🧠 [CONFIG] Upload Configuration - Provider: {provider}, Difficulty: {difficulty_level}, Depth: {depth_label}")
     try:
         if provider == "openai":
             if not openai_api_key:
@@ -137,11 +151,12 @@ async def upload_files(
                 mf.writelines(md_lines)
             
             # Generate flashcards automatically
-            print(f"🃏 [CARD GEN] Generating cards with difficulty_level={difficulty_level} for file: {f.filename}")
+            print(f"🃏 [CARD GEN] Generating cards with difficulty_level={difficulty_level}, depth_level={depth_value} for file: {f.filename}")
             generated_cards = generator.generate_cards_from_document(
                 document=processed,
                 cards_per_chunk=3,
-                difficulty_level=difficulty_level
+                difficulty_level=difficulty_level,
+                depth_level=depth_value
             )
             
             # Save generated cards to database

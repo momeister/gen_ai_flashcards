@@ -21,6 +21,7 @@ export default function UploadZone({ onCreated }) {
   const [flashcardDensity, setFlashcardDensity] = useState(5);
   const [lmstudioUrl, setLmstudioUrl] = useState('http://127.0.0.1:1234/v1');
   const [difficulty, setDifficulty] = useState(1);
+  const [depth, setDepth] = useState(1);
 
   const validate = (file) => {
     if (file.type.startsWith('video/')) return 'Videos are not allowed';
@@ -111,10 +112,11 @@ export default function UploadZone({ onCreated }) {
     try {
       const pid = await ensureServerProject();
       const uploads = [];
-      const uploadOptions = { provider, openaiApiKey, lmstudioUrl, difficulty };
+      const uploadOptions = { provider, openaiApiKey, lmstudioUrl, difficulty, depth };
+      const depthLabel = {1: 'Normal Thinking', 2: 'Deep Thinking', 3: 'Deep Deep Thinking'}[depth];
+      console.log('📤 Upload started', { projectId: pid, lecture: lectureFiles.length, extended: extendedFiles.length, provider, difficulty, depth, depthLabel });
       if (lectureFiles.length) uploads.push(uploadsAPI.upload(pid, lectureFiles, { ...uploadOptions, category: 'lecture_notes' }));
       if (extendedFiles.length) uploads.push(uploadsAPI.upload(pid, extendedFiles, { ...uploadOptions, category: 'extended_info' }));
-      console.log('📤 Upload started', { projectId: pid, lecture: lectureFiles.length, extended: extendedFiles.length, provider });
       const resultSets = await Promise.all(uploads);
       const allResults = resultSets.flat();
       console.log('✅ Upload finished', allResults);
@@ -216,12 +218,41 @@ export default function UploadZone({ onCreated }) {
           </label>
         </div>
 
+        {/* Depth selection */}
+        <div className="mt-3">
+          <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">Thinking Depth</label>
+          <div className="mt-2">
+            <input
+              type="range"
+              min={1}
+              max={3}
+              value={depth}
+              onChange={(e) => {
+                const newDepth = Number(e.target.value);
+                setDepth(newDepth);
+                const depthLabel = {1: 'Normal Thinking', 2: 'Deep Thinking', 3: 'Deep Deep Thinking'}[newDepth];
+                console.log(`🧠 [DEPTH] UploadZone depth changed to: ${newDepth} (${depthLabel})`);
+              }}
+              className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+            />
+            <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400 mt-2">
+              <span className={depth === 1 ? 'font-bold text-purple-600 dark:text-purple-400' : ''}>Normal Thinking</span>
+              <span className={depth === 2 ? 'font-bold text-purple-600 dark:text-purple-400' : ''}>Deep Thinking</span>
+              <span className={depth === 3 ? 'font-bold text-purple-600 dark:text-purple-400' : ''}>Deep Deep Thinking</span>
+            </div>
+          </div>
+        </div>
+
         {/* Difficulty selection 1–4 */}
         <div className="mt-3">
           <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">Difficulty (1–4)</label>
           <select
             value={difficulty}
-            onChange={(e)=> setDifficulty(Number(e.target.value))}
+            onChange={(e)=> {
+              const newDiff = Number(e.target.value);
+              setDifficulty(newDiff);
+              console.log(`📊 [DIFFICULTY] UploadZone difficulty changed to: ${newDiff}`);
+            }}
             className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 text-zinc-900 dark:text-zinc-100"
           >
             {[1,2,3,4].map(n => (
