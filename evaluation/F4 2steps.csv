@@ -1,0 +1,59 @@
+"Front";"Back";"Level";"ReviewCount";
+"What are some responsibilities of developers in AI systems?";"Choose algorithms and architectures, Select training data, Define metrics and objectives, Implement guardrails (or don't)";"new";"0";
+"What decisions do companies make regarding AI systems?";"Decide what problems to solve, Choose deployment contexts, Set policies and monitoring, Determine resources allocated";"new";"0";
+"What actions do users take with AI systems?";"Decide whether and how to use, Interpret and apply outputs, Verify (or don't verify) results, Provide feedback";"new";"0";
+"What roles do regulators and society play in AI systems?";"Set requirements and standards, Enforce (or fail to enforce), Allocate liability, Shape incentives";"new";"0";
+"What happens when agency is attributed to AI?";"When we attribute agency to AI, human responsibility disappears";"new";"0";
+"Who designs, chooses data, defines objectives, deploys, and uses AI systems?";"Humans designed the system, chose the data, defined the objective, deployed it, and continue to use it";"new";"0";
+"What is the consequence of attributing agency to AI according to the slide?";"Responsibility Disappears";"new";"0";
+"What are some examples of attributions made to AI systems?";"""The AI decided not to hire you""; ""The algorithm determined your creditworthiness""; ""The system flagged your content""";"new";"0";not accepted
+"What do regulators say about understanding AI systems?";"Regulators say: ""It's too complex to understand""";"new";"0";not accepted
+"What is the result of misattributing agency to AI systems?";"Harm occurs without accountability";"new";"0";
+"What is the effect of many hands problem on responsibility?";"When everyone is partially responsible, no one accepts full responsibility. ""Not my job""—everyone points to someone else, creating diffusion of responsibility.";"new";"0";
+"What does the 'Computer Says No' phenomenon attribute decisions to?";"Decisions are attributed to ""the system"" rather than human judgement. This creates psychological distance from outcomes and obscures the human choices that built and configured the system.";"new";"0";
+"How does the complexity of systems affect accountability?";"Systems become too complex for anyone to fully understand. ""We can't explain how it works"" transforms opacity into a shield against accountability.";"new";"0";
+"Why do humans attribute agency to systems that exhibit certain characteristics?";"Humans naturally attribute agency to systems that exhibit certain characteristics, even when those systems have no real understanding, intentions, or consciousness.";"new";"0";
+"What triggers our social cognition when systems produce language?";"Language Fluency When systems produce coherent, contextually appropriate language, we instinctively treat them as understanding.";"new";"0";
+"What design features encourage us to treat AI as an agent?";"Chatbots with names, first-person language (""I think,"" ""I believe""), avatars, and human-like responses encourage us to treat AI as an agent with mental states.";"new";"0";
+"How does system opacity influence attribution of agency?";"When we can't understand how a system works, we fill the gap by attributing it agency (""the algorithm decided,"" ""the AI wants"") rather than acknowledging our own ignorance about the mechanism.";"new";"0";
+"Who created ELIZA and where?";"A simple chatbot created by Joseph Weizenbaum at MIT";"new";"0";
+"What did ELIZA simulate?";"a psychotherapist using basic pattern matching and scripted responses";"new";"0";
+"What was the mechanism behind ELIZA's responses?";"Simple keyword detection + pre-written response templates";"new";"0";
+"What did users attribute to ELIZA?";"deep understanding and empathy";"new";"0";
+"What triggers attribution of agency, understanding, and care?";"Surface-level linguistic competence";"new";"0";
+"What example exchange shows ELIZA's responses?";"User: ""I'm worried about my mother"" ELIZA: ""Tell me more about your family""";"new";"0";trivial
+"What does instrumental agency mean?";"Acting as if it has purposes, appears goal-directed, optimizes for objectives, adapts behavior, produces coherent outputs, described ""as if"" intentional.";"new";"0";
+"What are the characteristics of genuine agency?";"Actually having purposes, self-determined goals, conscious intentionality, understanding of stakes, moral responsibility, autonomy and freedom.";"new";"0";
+"Do AI systems currently have genuine agency?";"No, AI systems (currently) lack genuine agency.";"new";"0";
+"Why is the distinction between instrumental and genuine agency important?";"It is a critical distinction for understanding AI ethics.";"new";"0";trivial
+"What kind of agency does AI have?";"AI has instrumental agency, which is useful for building systems.";"new";"0";
+"Which type of agency is necessary for moral responsibility?";"Genuine agency is necessary for moral responsibility.";"new";"0";
+"What can companies purchase instead of hiring humans?";"Companies can purchase cognitive capabilities (writing, analysis, coding, translation) without hiring humans—API calls instead of salaries";"new";"0";
+"What does democratization of AI mean in this context?";"Anyone with internet access can use sophisticated AI";"new";"0";
+"Who controls the AI infrastructure according to the slide?";"A few companies control the infrastructure";"new";"0";
+"What happens to the marginal cost of cognitive work?";"Marginal cost of cognitive work approaches zero";"new";"0";
+"What economic change is caused by AI's marginal cost?";"Creates winner-take-all dynamics and new forms of inequality";"new";"0";
+"What does 'Pay for Intelligence, Not People' imply?";"Pay for Intelligence, Not People
+Companies can purchase cognitive capabilities ... without hiring humans";"new";"0";
+"What is the First Industrial Revolution also called?";"Muscle Power on Demand";"new";"0";not accepted
+"Who accumulated wealth during the First Industrial Revolution?";"Those who owned factories and machines";"new";"0";
+"What is the Second Industrial Revolution also called?";"Intelligence on Demand";"new";"0";not accepted
+"Who is accumulating wealth in the Second Industrial Revolution?";"Those who own AI platforms and compute";"new";"0";
+"What happened to manual labor during the First Industrial Revolution?";"Manual labor displaced, new jobs emerged, massive economic restructuring";"new";"0";
+"What is displaced in the Second Industrial Revolution?";"Knowledge work displaced, new jobs emerging, massive economic restructuring";"new";"0";not accepetd
+"What are examples of routine cognitive work?";"Data entry, basic coding, document summarization, translation, customer service scripts, basic legal research, initial medical diagnoses";"new";"0";
+"What types of work are considered augmented by AI?";"Software engineering, scientific research, strategic planning, creative design, teaching, journalism";"new";"0";
+"Why are healthcare, trades, and caregiving more protected from AI?";"They require physical presence, human connection, trust, or real-world manipulation that AI cannot (yet) replicate";"new";"0";
+"What does AI amplify according to the slide?";"AI amplifies existing power dynamics.";"new";"0";
+"What is required to train frontier models?";"Billions in investment.";"new";"0";trivial
+"What leads to better models and more users?";"More users → more data → better models → more users.";"new";"0";hallucinating
+"Who historically captures the value of increased productivity?";"Capital owners.";"new";"0";
+"How many companies can afford to train frontier models?";"Only a handful of companies.";"new";"0";
+"What type of market dynamic is described?";"Winner-take-most dynamics.";"new";"0";not accepted
+"What does the slide say about AI and knowledge workers?";"AI will replace all knowledge workers";"new";"0";not accepted
+"What does the slide mention about human judgment?";"Some tasks automated, others augmented. Many require human judgment.";"new";"0";
+"What is the question posed about AI in the slide?";"The question is not ""will AI replace you"" but ""how will you work with AI?""";"new";"0";trivial
+"What activities does the slide say people continue to do despite AI?";"People still run marathons, climb mountains, do crafts by hand, and value physical fitness.";"new";"0";not accepted
+"Why do people continue to think, learn, and create according to the slide?";"because using our intelligence is intrinsically valuable.";"new";"0";
+"Why do people play sports and exercise despite machines being stronger and AI being faster?";"People play sports and exercise for enjoyment, health, challenge, physical accomplishment, and to find meaning in using their bodies.";"new";"0";
+"Why do people think and solve problems despite AI being faster?";"People think and solve problems for enjoyment, satisfaction, intellectual accomplishment, and to find meaning in using their minds.";"new";"0";

@@ -1,0 +1,37 @@
+"Front";"Back";"Level";"ReviewCount";
+"What are the key decision-making responsibilities of developers in AI systems?";"Developers decide on algorithms, architectures, training data, metrics, objectives, and guardrails in AI systems.";"new";"0";
+"What are the primary responsibilities of companies in AI systems?";"Companies decide on problems to address, deployment contexts, policies, monitoring, and resource allocation.";"new";"0";
+"What are the responsibilities of regulators and society in AI systems?";"Regulators and society set standards, enforce rules, allocate liability, and shape incentives for AI.";"new";"0";
+"What happens to human responsibility when agency is attributed to AI?";"Human responsibility diminishes or disappears when agency is attributed to AI.";"new";"0";
+"Who is responsible for the behavior of AI systems?";"Humans are responsible for AI behavior because they design, develop, and deploy the system.";"new";"0";
+"What is the consequence of failing to assign responsibility for AI harm?";"Failure to assign responsibility leads to harm without accountability.";"new";"0";
+"What is the 'Many Hands Problem' in responsibility attribution?";"It occurs when shared responsibility leads to no individual accepting full accountability because everyone is partially responsible and points to others.";"new";"0";
+"What does the 'Computer Says No' phenomenon refer to?";"It refers to decisions being attributed to the system rather than human judgment, creating psychological distance from the outcomes.";"new";"0";
+"What is the 'Complexity Excuse' in accountability frameworks?";"It is when system complexity prevents full understanding, often used to avoid responsibility by claiming the system is a 'black box'.";"new";"0";
+"What is a key reason humans attribute agency to AI systems despite their lack of consciousness?";"Humans attribute agency based on observable characteristics, not actual understanding or consciousness.";"new";"0";
+"How does language fluency in AI influence human perception of understanding?";"Coherent language from AI triggers perceptions of understanding, regardless of actual comprehension.";"new";"0";
+"What is the effect of opacity and complexity on human attribution of agency to AI?";"Opacity and complexity lead humans to attribute agency because of cognitive filling-in of gaps.";"new";"0";
+"What is the ELIZA program and how does it simulate a psychotherapist?";"ELIZA is a chatbot that mimics a psychotherapist through pattern matching and scripted replies without understanding.";"new";"0";
+"Why did users attribute understanding and empathy to ELIZA despite its limited capabilities?";"Users attributed understanding to ELIZA because its superficial language skills resembled empathy.";"new";"0";hallucinated
+"What psychological effect did ELIZA demonstrate regarding human perception of machines?";"People tend to anthropomorphize simple chatbots, perceiving them as understanding entities.";"new";"0";hallucinated
+"What is instrumental agency?";"Instrumental agency is acting as if one has purposes, appearing goal-directed and optimizing objectives.";"new";"0";
+"What is genuine agency?";"Genuine agency is actually having purposes with self-determined goals, consciousness, and moral responsibility.";"new";"0";
+"Why is genuine agency important for moral responsibility?";"Because genuine agency involves moral responsibility, which requires actual intentionality and purpose.";"new";"0";not accepted
+"What is meant by 'Intelligence as a Commodity'?";"Intelligence as a Commodity means cognitive capabilities can now be bought and sold at scale, similar to electricity or computing power.";"new";"0";
+"What does democratization of AI refer to?";"Democratization of AI means broad access to advanced AI tools via the internet.";"new";"0";
+"How does the marginal cost of cognitive work change with AI?";"The marginal cost of cognitive work approaches zero as one AI model can serve millions of users.";"new";"0";
+"What was the primary energy source during the First Industrial Revolution?";"Steam engines and machines powered the First Industrial Revolution.";"new";"0";
+"What is the main characteristic of the Second Industrial Revolution?";"The use of AI systems and automation platforms to enable cognitive labor.";"new";"0";
+"In the context of the Second Industrial Revolution, who is likely to accumulate wealth?";"Owners of AI platforms and computing resources are accumulating wealth.";"new";"0";
+"What types of work are most vulnerable to AI impact?";"Routine cognitive work, such as data entry, basic coding, and translation, is most vulnerable to AI impact.";"new";"0";
+"Why are complex knowledge work tasks less vulnerable to AI?";"Because these tasks require human judgment, creativity, and contextual understanding which AI cannot fully replicate.";"new";"0";
+"What characteristics make physical and social work more protected from AI automation?";"They require physical presence, human connection, trust, or real-world manipulation that AI cannot perform.";"new";"0";
+"What effect does AI have on existing power dynamics?";"AI amplifies existing power structures.";"new";"0";
+"What determines which companies can develop advanced AI models?";"Only a few companies with large resources can afford to develop advanced AI models.";"new";"0";
+"How does an increase in users affect AI model development?";"An increase in users leads to more data, which improves models and attracts even more users.";"new";"0";hallucinating
+"What is the common misconception about AI's impact on knowledge workers?";"The misconception is that AI will completely replace knowledge workers, but in reality, some tasks are automated while others require human judgment.";"new";"0";
+"What is the key question regarding human work and AI?";"The key question is how humans will work with AI, not whether AI will replace them.";"new";"0";
+"Why do people continue to think and create despite advances in AI?";"People value the intrinsic worth of thinking, learning, and creating, beyond just efficiency gains.";"new";"0";
+"What are some reasons people engage in physical activity despite machines being stronger?";"People engage in physical activity for enjoyment, health, challenge, and personal meaning, despite machines being stronger.";"new";"0";
+"What are some reasons people engage in cognitive activities despite AI being faster?";"People engage in cognitive activities for enjoyment, satisfaction, achievement, and personal meaning despite AI's speed.";"new";"0";
+"What does the sports analogy illustrate about human motivation for physical and cognitive activities?";"It illustrates that humans value personal meaning, enjoyment, and accomplishment over mere efficiency or speed.";"new";"0";hallucinating

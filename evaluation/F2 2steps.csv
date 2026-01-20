@@ -1,0 +1,46 @@
+"Front";"Back";"Level";"ReviewCount";
+"What is the main topic of the slide?";"Applying LLM Capabilities For Group Projects";"new";"0";trivial
+"What is the first mode of personal knowledge management?";"Collect";"new";"0";trivial
+"What does the Surface mode involve in PKM?";"Find collected thoughts, either active (search) or passive (agentic)";"new";"0";
+"What is the purpose of the Connect mode in PKM?";"Connect related ideas, consider perspective";"new";"0";
+"What does synthesizing knowledge involve in PKM?";"Synthesize knowledge from collection";"new";"0";
+"What is analyzed in the Reflect mode of PKM?";"Analyze thinking patterns and knowledge gaps";"new";"0";
+"What are traditional challenges associated with collecting data in PKM?";"Information overload, inconsistent formats";"new";"0";
+"What are foundation models usually trained for?";"Usually trained for next token prediction / text completion";"new";"0";
+"What are fine-tuned models specialised for?";"Specialised for specific tasks: Instruct models follow instructions on a single prompt often work well in conversations";"new";"0";not accepted
+"What are chat models optimised for?";"Chat models Optimised for multi-turn dialogues and maintaining context over several interactions";"new";"0";
+"What do multi-modal models combine?";"Combine information from different modalities such as text with images etc.";"new";"0";
+"What do embedding models generate?";"Generate dense vector representations of input data for tasks like similarity search, clustering, or recommendation systems";"new";"0";
+"What objectives are embedding models trained with?";"Often trained with objectives like contrastive learning or triplet loss to enhance semantic relationships in the embedding space";"new";"0";
+"What do weights determine in an LLM?";"Weights determine how the model processes input and produces output.";"new";"0";
+"What is the role of context in an LLM?";"The role of context is to provide the text at inference time, including system prompt, user prompt, chat history, and additional information.";"new";"0";
+"What is inference in the context of an LLM?";"Inference is the process of generating output based on the model's weights and context.";"new";"0";not accepted
+"What does short-term memory in an LLM include?";"Short-term memory includes the text provided to the model at inference time, such as system prompt, user prompt, chat history, and additional information.";"new";"0";
+"What is a characteristic of models with large context windows?";"Models with large context windows tend to forget the middle of the context.";"new";"0";
+"How does an LLM process input and produce output?";"An LLM processes input and produces output by determining how the model processes input and generates output.";"new";"0";trivial
+"What is the technique called that allows LLMs to adapt to new tasks from examples in the prompt?";"In-Context Learning";"new";"0";
+"Why do we prefer to call it In-Context Adaptation instead of Learning?";"because there are no parameters updated or learnt";"new";"0";
+"What does Zero-Shot Prompting involve?";"No examples are provided in the prompt. The LLM relies solely on its vast pre-trained knowledge to understand the instruction and perform the task.";"new";"0";
+"What is included in One-Shot Prompting to help the model?";"A single example is included in the prompt. This provides a clear template, helping the model understand the desired output format or style for a specific task.";"new";"0";
+"How does Few-Shot Prompting improve the model's performance?";"Multiple examples are supplied in the prompt. This significantly enhances the model's ability to follow complex instructions and quickly adapt to novel tasks.";"new";"0";
+"What does fine-tuning do to a pre-trained model?";"Fine-tuning takes a pre-trained model and trains it further on a smaller, task-specific dataset.";"new";"0";
+"How does fine-tuning differ from in-context learning?";"Unlike in-context learning, which leverages examples within a prompt, fine-tuning modifies the model's parameters directly.";"new";"0";
+"What are the benefits of fine-tuning?";"Significantly improves accuracy and quality on specific target tasks.";"new";"0";
+"What are the limitations of fine-tuning?";"Usually BAD for adding new knowledge due to overfitting and catastrophic forgetting.";"new";"0";
+"What does fine-tuning tailor the model's understanding and generation to?";"Tailors the model's understanding and generation to a particular field.";"new";"0";
+"What is recommended instead of fine-tuning for adding new knowledge?";"3 use RAG instead";"new";"0";
+"What is the focus of creating LLM flows?";"Chains of operations often work better than zero-shot";"new";"0";
+"What is the benefit of breaking complex tasks into steps?";"Breaking complex tasks into manageable steps";"new";"0";trivial
+"What example is given for handling complex tasks?";"Example: Multiple LLM calls for summarise ³ extract ³ format";"new";"0";
+"What is contrasted with multiple LLM calls?";"instead of one single step that tries to do all at once";"new";"0";
+"What are some ways to implement multi-step composition?";"Implementation: Multi-step composition in code (cmp. chain mini pattern). Orchestration frameworks like LangChain. Flow engineering tools.";"new";"0";not accepted
+"Which frameworks are mentioned for flow orchestration?";"Orchestration frameworks like LangChain.";"new";"0";trivial
+"What are the key tasks involved in context & history handling?";"Managing conversation state, summarizing long contexts, and strategically pruning history to stay within token limits whilst preserving critical information.";"new";"0";
+"What data formats are mentioned for handling structured input/output?";"JSON schemas, XML templates, or custom formats.";"new";"0";
+"What is the purpose of connecting multiple LLM calls in sequence?";"Enabling complex multi-stage processing and reasoning by passing outputs as inputs to subsequent steps.";"new";"0";
+"What is the role of calling external tools and functions?";"To augment context.";"new";"0";
+"What is the name of the mini-pattern described?";"Mini-Pattern: Multi-Step Processing";"new";"0";trivial
+"What does the initial processing step involve?";"First LLM call extracts key information or performs initial analysis on raw input data";"new";"0";
+"What is the purpose of intermediate steps?";"Subsequent calls refine, validate, or transform the output from previous steps";"new";"0";
+"What does the final generation step do?";"Last call synthesizes all intermediate results into final output format";"new";"0";
+"What are the steps involved in the process chain?";"Summarize text, extract actions, format output";"new";"0";not accepted
