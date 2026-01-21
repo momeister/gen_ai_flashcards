@@ -1,0 +1,28 @@
+"Front";"Back";"Level";"ReviewCount";
+"What is the main topic of the presentation?";"The main topic is applying Large Language Model (LLM) capabilities for group projects.";"new";"0";trivial
+"Who is the author of the presentation?";"Bernhard Krüpl-Sypien.";"new";"0";trivial
+"What is an example of a task that LLMs can assist with in group projects?";"LLMs can help generate ideas, draft content, or facilitate communication among team members.";"new";"0";hallucinated
+"What is the first mode of personal knowledge management?";"The first mode is Collect, which involves gathering data, information, or knowledge.";"new";"0";not accepted
+"What does the Connect mode involve?";"Connect involves linking related ideas and considering different perspectives.";"new";"0";not accepted
+"What is the purpose of the Reflect mode in PKM?";"Reflect involves analyzing thinking patterns and identifying knowledge gaps.";"new";"0";
+"What is a foundation model typically trained for?";"A foundation model is usually trained for next token prediction or text completion tasks.";"new";"0";
+"What is the main purpose of fine-tuned models?";"Fine-tuned models are specialized for specific tasks, such as following instructions or engaging in multi-turn dialogues.";"new";"0";
+"What do embedding models generate and what are they used for?";"Embedding models generate dense vector representations of input data, which are used for tasks like similarity search, clustering, or recommendation systems.";"new";"0";
+"What are the two main types of memory that an LLM uses to generate output?";"An LLM uses weights as long-term memory and context as short-term memory to process input and produce output.";"new";"0";
+"What role do weights play in an LLM?";"Weights are learned during the original training of the model and determine how it processes input and generates output.";"new";"0";
+"What is meant by 'context' in an LLM?";"Context refers to the short-term memory that includes the text provided during inference, such as prompts, chat history, and additional information, which influences the model's output.";"new";"0";
+"What is In-Context Adaptation in Large Language Models?";"In-Context Adaptation allows Large Language Models to adjust to new tasks by using examples provided in the prompt, without updating any model parameters.";"new";"0";
+"What is the main difference between Zero-Shot and One-Shot Prompting?";"Zero-Shot Prompting uses no examples in the prompt, relying solely on pre-trained knowledge, while One-Shot Prompting includes a single example to guide the model.";"new";"0";
+"How does Few-Shot Prompting improve the model's performance?";"Few-Shot Prompting provides multiple examples in the prompt, helping the model better understand complex instructions and adapt to new tasks more effectively.";"new";"0";
+"What is fine-tuning in machine learning?";"Fine-tuning is the process of training a pre-trained model further on a smaller, task-specific dataset to improve its performance on a particular task.";"new";"0";
+"How does fine-tuning differ from in-context learning?";"Fine-tuning modifies the model's parameters directly, while in-context learning uses examples within a prompt without changing the model's parameters.";"new";"0";
+"What are some disadvantages of fine-tuning?";"Fine-tuning can lead to overfitting and catastrophic forgetting, making it less suitable for adding new knowledge to the model.";"new";"0";
+"What is a common approach to handling complex tasks with LLMs?";"Breaking the task into manageable steps and using multiple LLM calls instead of trying to do everything in one step.";"new";"0";
+"What is an example of a multi-step LLM process?";"Summarizing, then extracting information, then formatting the output, each in separate steps.";"new";"0";
+"Name a tool or framework used for orchestrating multi-step LLM workflows.";"LangChain is an example of an orchestration framework for flow engineering.";"new";"0";trivial
+"What is the purpose of managing conversation state in architecture patterns?";"Managing conversation state involves tracking, summarizing, and pruning conversation history to stay within token limits while preserving important information.";"new";"0";not accepted
+"What are some data formats used for structured input/output handling?";"JSON schemas, XML templates, and custom formats are used to ensure reliable parsing and validation of model responses.";"new";"0";trivial
+"How do workflows and chains enhance the capabilities of language models?";"Workflows and chains connect multiple LLM calls in sequence, passing outputs as inputs to enable complex multi-stage processing and reasoning.";"new";"0";
+"What is the purpose of the initial processing step in multi-step processing?";"The initial processing step extracts key information or performs an initial analysis on raw input data.";"new";"0";
+"What happens during the final generation step?";"The final generation step synthesizes all intermediate results into the final output format.";"new";"0";
+"What is a simple chain in multi-step processing?";"A simple chain is a sequence of steps where each step performs a specific task, such as summarizing, extracting actions, and formatting output.";"new";"0";trivial

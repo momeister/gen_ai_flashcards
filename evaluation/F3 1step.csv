@@ -1,0 +1,46 @@
+"Front";"Back";"Level";"ReviewCount";
+"What is agency?";"Agency is the capacity to make autonomous choices and take intentional actions that affect oneself and the world.";"new";"0";
+"What are the core characteristics of agency?";"The core characteristics include autonomous decision-making, intentionality, understanding consequences, and moral responsibility for outcomes.";"new";"0";
+"What does agency require to function?";"Agency requires consciousness, intentionality, and the ability to understand the consequences of one's actions.";"new";"0";
+"What key qualities does human agency possess?";"Human agency possesses consciousness, intentionality, understanding of context and meaning, and the ability to create goals, values, and purposes based on lived experience.";"new";"0";
+"Can AI systems bear moral responsibility?";"No, AI systems cannot bear moral responsibility; responsibility remains with human designers and deployers.";"new";"0";
+"How do AI systems appear to act as agents?";"AI systems appear agentic through sophisticated pattern matching, but they do not have true agency or understanding.";"new";"0";
+"Why can't ethical responsibility be delegated to AI algorithms?";"Because current AI lacks agency, so humans must take responsibility for the outcomes and impacts of AI systems.";"new";"0";
+"What does every technical decision in AI development embed?";"Every technical decision embeds ethical choices made by humans, such as data collection, model architecture, and deployment.";"new";"0";
+"What is the primary focus of AI ethics according to the text?";"The focus is on human agency and how humans design, deploy, and govern AI systems ethically.";"new";"0";
+"Who are considered the agents with agency in AI ethics?";"Humans such as designers, companies, users, and regulators are considered agents with agency.";"new";"0";
+"What is the difference between moral subjects and objects?";"Moral subjects are agents with moral responsibility, while objects are those affected by actions and do not have moral responsibility.";"new";"0";
+"What is a key concern when deciding who should have agency in AI systems?";"A key concern is where humans should maintain control and how to safely delegate authority to AI while preserving human agency.";"new";"0";
+"Who are involved in designing AI systems?";"Engineers and other stakeholders work together to design AI systems.";"new";"0";
+"What does AI ethics consider in relation to AI behavior?";"It considers how AI should behave when it is initially designed.";"new";"0";
+"With whom does agency exist when using AI?";"Agency exists with the user and possibly with the AI itself during use.";"new";"0";
+"What is the core principle of consequentialism?";"Actions are judged by their outcomes, aiming to maximize good and minimize harm.";"new";"0";
+"According to deontology, what matters more: the outcomes of actions or the rules and duties?";"Rules, duties, and rights matter regardless of the outcomes.";"new";"0";
+"What does virtue ethics emphasize when making ethical decisions?";"It emphasizes character and intentions, focusing on what kind of person you are being.";"new";"0";
+"What does Virtue Ethics emphasize as important in moral behavior?";"Virtue Ethics emphasizes that character and intentions matter, focusing on virtues like honesty, courage, wisdom, and justice.";"new";"0";
+"Who is a key thinker associated with Virtue Ethics?";"Aristotle is a key thinker associated with Virtue Ethics.";"new";"0";
+"What is a strength of Virtue Ethics in moral development?";"It emphasizes moral development and the cultivation of good character and virtues.";"new";"0";not accepted
+"What is the core principle of deontology according to Kant?";"The core principle is that rules and duties matter regardless of the outcomes of actions.";"new";"0";
+"What does Kant's Categorical Imperative advise us to do?";"Act only according to maxims that you would want to become universal law.";"new";"0";
+"Why are practices like privacy violations and manipulation considered wrong in deontology?";"Because they violate the respect for human dignity and treat people as mere means, which are inherently wrong regardless of benefits.";"new";"0";
+"What is the main principle of Consequentialism / Utilitarianism?";"Actions are judged entirely by their outcomes, aiming to maximize overall good and minimize harm.";"new";"0";
+"What is the central question in Utilitarianism?";"What produces the best overall consequences?";"new";"0";
+"Name two key thinkers associated with Utilitarianism.";"Jeremy Bentham and John Stuart Mill.";"new";"0";
+"What is the main goal of utilitarianism in the context of the Trolley Problem?";"To minimize total harm by saving more lives, even if it means pulling a lever to cause fewer deaths overall.";"new";"0";
+"What does the phrase 'Pull the lever' refer to in utilitarianism?";"It refers to making a decision that results in saving more lives by actively choosing to sacrifice fewer people.";"new";"0";not accepted
+"What is a key feature of a utilitarian calculation in moral decisions?";"It involves comparing the total amount of harm or welfare to determine the best course of action.";"new";"0";
+"What does deontology say about actively pulling to kill?";"Deontology states that actively pulling to kill is wrong because it uses a person as a means to save others and violates the duty not to kill.";"new";"0";
+"According to deontology, is the morality of an action based on its outcome?";"No, deontology considers the action itself as wrong or right regardless of the outcome.";"new";"0";
+"In the context of deontology, what is the main ethical violation involved in pulling to kill?";"The main violation is the duty not to kill, as pulling actively kills a person and treats them as a means to an end.";"new";"0";
+"What does virtue ethics focus on when making moral decisions?";"Virtue ethics focuses on what a virtuous person would do, emphasizing character and practical wisdom.";"new";"0";
+"What is practical wisdom in virtue ethics called?";"Practical wisdom is called phronesis.";"new";"0";trivial
+"Does virtue ethics rely on strict rules or developed character to determine right action?";"Virtue ethics relies on developed character and practical wisdom, not strict rules or formulas.";"new";"0";
+"What does principlism focus on in ethical decision-making?";"Principlism focuses on widely-shared mid-level ethical principles that guide practical decision-making across different philosophical traditions.";"new";"0";
+"In which field was principlism originally developed?";"Principlism was originally developed in biomedical ethics for medical decision-making.";"new";"0";
+"What is a practical advantage of principlism?";"It provides actionable guidance without requiring commitment to a single philosophical framework, making it useful for multidisciplinary teams.";"new";"0";
+"What does the principle of fairness in AI ethics emphasize?";"Fairness in AI ethics emphasizes treating individuals and groups equitably and avoiding discrimination and unjust bias.";"new";"0";
+"Why is transparency important in AI systems?";"Transparency makes AI systems understandable and explainable to stakeholders, helping them trust and evaluate the systems.";"new";"0";
+"What is the main goal of the principle of privacy in AI ethics?";"The main goal of privacy is to protect personal data and respect individuals' informational self-determination.";"new";"0";
+"What is a common trade-off when trying to improve fairness in AI systems?";"Improving fairness across groups often reduces the overall accuracy of the AI system.";"new";"0";
+"Why is there a challenge in providing transparency in AI systems?";"Explaining how an AI works may reveal sensitive data, so there is a balance between transparency and privacy.";"new";"0";
+"What is a potential consequence of restricting user autonomy in AI safety measures?";"Preventing harmful choices may limit user freedom, raising the question of whether errors should be allowed to preserve autonomy.";"new";"0";
