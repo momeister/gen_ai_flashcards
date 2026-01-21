@@ -4,7 +4,7 @@ Full-stack learning application with automatic PDF/Image text extraction and fla
 
 ## Quick Start
 
-### Option A: Docker (all-in-one)
+### Option A: Docker
 ```bash
 docker build -t genai-flashcards .
 docker run -p 8000:8000 genai-flashcards
@@ -14,7 +14,7 @@ docker run -p 8000:8000 genai-flashcards
 - React build is served from `/` (static assets under `/static`)
 - Upload folders are created automatically inside the container under `/app/uploads`
 
-### Option B: Local development (frontend + backend separately)
+### Option B: Local development
 1) Backend
 ```bash
 cd genai-backend
