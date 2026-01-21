@@ -4,6 +4,8 @@ import { getProjects, createProject, saveProject } from '../utils/projects';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const allowedMimeStarts = ['image/', 'application/pdf', 'text/', 'application/vnd'];
+// Optional default OpenAI key sourced from Vite env for local dev convenience
+const defaultOpenaiApiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
 
 export default function UploadZone({ onCreated }) {
   const [lectureFiles, setLectureFiles] = useState([]);
@@ -14,8 +16,8 @@ export default function UploadZone({ onCreated }) {
   const [lectureDropActive, setLectureDropActive] = useState(false);
   const [extendedDropActive, setExtendedDropActive] = useState(false);
   const [errorMessages, setErrorMessages] = useState([]);
-  const [provider, setProvider] = useState('lmstudio');
-  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [provider, setProvider] = useState('openai');
+  const [openaiApiKey, setOpenaiApiKey] = useState(defaultOpenaiApiKey);
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [flashcardScope, setFlashcardScope] = useState('all_slides');
   const [flashcardDensity, setFlashcardDensity] = useState(5);
@@ -190,19 +192,7 @@ export default function UploadZone({ onCreated }) {
       <div className="space-y-3 p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-300 dark:border-zinc-700">
         <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">AI Provider for Card Generation</label>
         <div className="flex gap-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              value="lmstudio"
-              checked={provider === 'lmstudio'}
-              onChange={(e) => {
-                setProvider(e.target.value);
-                setShowApiKeyInput(false);
-              }}
-              className="w-4 h-4 text-cyan-500 focus:ring-cyan-500"
-            />
-            <span className="text-sm text-zinc-700 dark:text-zinc-300">LMStudio (Local)</span>
-          </label>
+          
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
@@ -215,6 +205,19 @@ export default function UploadZone({ onCreated }) {
               className="w-4 h-4 text-cyan-500 focus:ring-cyan-500"
             />
             <span className="text-sm text-zinc-700 dark:text-zinc-300">OpenAI</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              value="lmstudio"
+              checked={provider === 'lmstudio'}
+              onChange={(e) => {
+                setProvider(e.target.value);
+                setShowApiKeyInput(false);
+              }}
+              className="w-4 h-4 text-cyan-500 focus:ring-cyan-500"
+            />
+            <span className="text-sm text-zinc-700 dark:text-zinc-300">LMStudio (Local)</span>
           </label>
         </div>
 
@@ -276,6 +279,9 @@ export default function UploadZone({ onCreated }) {
               placeholder="sk-..."
               className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500"
             />
+            {defaultOpenaiApiKey && (
+              <p className="text-xs text-green-600 dark:text-green-400">Default key loaded from VITE_OPENAI_API_KEY</p>
+            )}
             <p className="text-xs text-zinc-500 dark:text-zinc-400">Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:text-cyan-400 underline">platform.openai.com/api-keys</a></p>
           </motion.div>
         )}
@@ -379,7 +385,7 @@ export default function UploadZone({ onCreated }) {
           onClick={handleUpload} 
           className="flex-1 px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold shadow-lg transition-all disabled:opacity-50"
         >
-          {uploading ? '⏳ Uploading…' : `📤 Upload Project (${lectureFiles.length + extendedFiles.length} files)`}
+          {uploading ? '⏳ Uploading… (up to 2 min)' : `📤 Upload Project (${lectureFiles.length + extendedFiles.length} files)`}
         </motion.button>
       </div>
     </div>

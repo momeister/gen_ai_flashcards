@@ -193,7 +193,7 @@ class CardGenerator:
             prompt = self._create_generation_prompt(text, num_cards, difficulty_level)
             try:
                 response = self._call_llm(prompt)
-                cards = self._parse_cards_response(response)
+                cards = self._parse_response(response)
                 
                 # Set difficulty level
 
